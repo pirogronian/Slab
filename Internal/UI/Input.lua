@@ -828,6 +828,10 @@ end
 function Input.Begin(Id, Options)
 	assert(Id ~= nil, "Please pass a valid Id into Slab.Input.")
 
+	if not Window.IsActive() then
+		return false
+	end
+
 	local StatHandle = Stats.Begin('Input', 'Slab')
 
 	Options = Options == nil and {} or Options

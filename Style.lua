@@ -70,6 +70,7 @@ local Style =
 	ComboBoxRounding = 2.0,
 	InputBgRounding = 2.0,
 	ScrollBarRounding = 2.0,
+	WindowBorder = 4,
 
 	API = API
 }

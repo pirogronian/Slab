@@ -56,6 +56,10 @@ local function GetInstance(Id)
 end
 
 function ComboBox.Begin(Id, Options)
+	if not Window.IsActive() then
+		return false
+	end
+
 	local StatHandle = Stats.Begin('ComboBox', 'Slab')
 
 	Options = Options ~= nil and Options or {}

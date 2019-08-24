@@ -1949,6 +1949,53 @@ local function DrawFonts()
 	Slab.Text("This text control is using the default font.")
 end
 
+local DrawTabs_NumWindows = 5
+local DrawTabs_ComboBox_Selected = DrawComboBox_Options[1]
+
+local function DrawTabs()
+	Slab.Textf(
+		"The Slab API offers the ability to create tabbed windows. All BeginWindow/EndWindow calls within calls to BeginTabs/EndTabs " ..
+		"will have their windows embedded into the Tab window. The title of each window are tabs in the title bar and each can be " ..
+		"selectable. If the number of tabs exceed the window width, then a drop down arrow will appear. Clicking on this arrow " ..
+		"will bring up a window that allows for a specific window to be selected.")
+
+	Slab.NewLine()
+	Slab.Separator()
+
+	Slab.BeginLayout('DrawTabs_Settings', {AlignX = 'center'})
+	Slab.Text("Number Of Windows")
+	Slab.SameLine()
+	if Slab.Input('DrawTabs_NumWindows', {Text = tostring(DrawTabs_NumWindows), ReturnOnText = false, NumbersOnly = true, MinNumber = 1}) then
+		DrawTabs_NumWindows = Slab.GetInputNumber()
+	end
+	Slab.EndLayout()
+
+	Slab.BeginTabs('DrawTabs_Tabs')
+	for I = 1, DrawTabs_NumWindows, 1 do
+		Slab.BeginWindow('DrawTabs_Window_' .. I, {Title = "Tab " .. I, X = 900, Y = 100})
+		if I == 2 then
+			if Slab.BeginComboBox('DrawTabs_ComboBox_' .. I, {Selected = DrawTabs_ComboBox_Selected}) then
+				for Index, Item in ipairs(DrawComboBox_Options) do
+					if Slab.TextSelectable(Item) then
+						DrawTabs_ComboBox_Selected = Item
+					end
+				end
+
+				Slab.EndComboBox()
+			end
+		elseif I == 3 then
+			if Slab.BeginTree('DrawTabs_Tree_Root', {Label = "Root"}) then
+				Slab.BeginTree('DrawTabs_Tree_Child', {Label = "Child", IsLeaf = true})
+				Slab.EndTree()
+			end
+		else
+			Slab.Text("This is a window at tab " .. I)
+		end
+		Slab.EndWindow()
+	end
+	Slab.EndTabs()
+end
+
 local DrawSlabTest = true
 
 function SlabTest.MainMenuBar()
@@ -1991,7 +2038,8 @@ local Categories = {
 	{"Tooltips", DrawTooltip},
 	{"Stats", DrawStats},
 	{"Layout", DrawLayout},
-	{"Fonts", DrawFonts}
+	{"Fonts", DrawFonts},
+	{"Tabs", DrawTabs}
 }
 
 local Selected = nil

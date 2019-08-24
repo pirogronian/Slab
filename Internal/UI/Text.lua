@@ -30,11 +30,16 @@ local LayoutManager = require(SLAB_PATH .. '.Internal.UI.LayoutManager')
 local Mouse = require(SLAB_PATH .. '.Internal.Input.Mouse')
 local Stats = require(SLAB_PATH .. '.Internal.Core.Stats')
 local Style = require(SLAB_PATH .. '.Style')
+local Tab = require(SLAB_PATH .. '.Internal.UI.Tab')
 local Window = require(SLAB_PATH .. '.Internal.UI.Window')
 
 local Text = {}
 
 function Text.Begin(Label, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Text', 'Slab')
 
 	Options = Options == nil and {} or Options
@@ -99,6 +104,10 @@ function Text.Begin(Label, Options)
 end
 
 function Text.BeginFormatted(Label, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Textf', 'Slab')
 
 	local WinW, WinH = Window.GetBorderlessSize()
@@ -127,6 +136,10 @@ function Text.BeginFormatted(Label, Options)
 end
 
 function Text.BeginObject(Object, Options)
+	if not Window.IsActive() then
+		return
+	end
+	
 	local StatHandle = Stats.Begin('TextObject', 'Slab')
 
 	local WinW, WinH = Window.GetBorderlessSize()

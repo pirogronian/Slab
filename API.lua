@@ -49,6 +49,7 @@ local Separator = require(SLAB_PATH .. '.Internal.UI.Separator')
 local Shape = require(SLAB_PATH .. '.Internal.UI.Shape')
 local Stats = require(SLAB_PATH .. '.Internal.Core.Stats')
 local Style = require(SLAB_PATH .. '.Style')
+local Tab = require(SLAB_PATH .. '.Internal.UI.Tab')
 local Text = require(SLAB_PATH .. '.Internal.UI.Text')
 local Tree = require(SLAB_PATH .. '.Internal.UI.Tree')
 local Window = require(SLAB_PATH .. '.Internal.UI.Window')
@@ -305,6 +306,7 @@ end
 function Slab.Draw()
 	local StatHandle = Stats.Begin('Draw', 'Slab')
 
+	Tab.Validate()
 	Window.Validate()
 
 	if MenuState.RequestClose then
@@ -1930,6 +1932,31 @@ end
 --]]
 function Slab.GetLayoutSize()
 	return LayoutManager.GetActiveSize()
+end
+
+--[[
+	BeginTabs
+
+	Begins the process of collecting windows to be displayed in a tabbed window. The selected window will be highlighted
+	and all other windows will not be rendered.
+
+	Id: [String] The Id identifying this tabbed window.
+
+	Return: None.
+--]]
+function Slab.BeginTabs(Id)
+	Tab.Begin(Id)
+end
+
+--[[
+	EndTabs
+
+	Ends the tabbed window. All BeginTabs call must have a matching EndTabs call.
+
+	Return: None.
+--]]
+function Slab.EndTabs()
+	Tab.End()
 end
 
 return Slab

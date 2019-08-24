@@ -29,8 +29,10 @@ local DrawCommands = require(SLAB_PATH .. ".Internal.Core.DrawCommands")
 local MenuState = require(SLAB_PATH .. ".Internal.UI.MenuState")
 local Mouse = require(SLAB_PATH .. ".Internal.Input.Mouse")
 local Region = require(SLAB_PATH .. ".Internal.UI.Region")
+local Sizer = require(SLAB_PATH .. '.Internal.UI.Sizer')
 local Stats = require(SLAB_PATH .. ".Internal.Core.Stats")
 local Style = require(SLAB_PATH .. ".Style")
+local Tab = require(SLAB_PATH .. '.Internal.UI.Tab')
 local Utility = require(SLAB_PATH .. ".Internal.Core.Utility")
 
 local Window = {}
@@ -41,19 +43,6 @@ local StackLockId = nil
 local PendingStack = {}
 local ActiveInstance = nil
 local CurrentFrameNumber = 0
-
-local SizerType =
-{
-	None = 0,
-	N = 1,
-	E = 2,
-	S = 3,
-	W = 4,
-	NE = 5,
-	SE = 6,
-	SW = 7,
-	NW = 8
-}
 
 local function UpdateStackIndex()
 	for I = 1, #Stack, 1 do
@@ -90,7 +79,7 @@ local function NewInstance(Id)
 	Instance.AllowMove = true
 	Instance.AllowResize = true
 	Instance.AllowFocus = true
-	Instance.SizerType = SizerType.None
+	Instance.SizerType = Sizer.GetTypes().None
 	Instance.SizerFilter = nil
 	Instance.SizeDeltaX = 0.0
 	Instance.SizeDeltaY = 0.0
@@ -142,7 +131,7 @@ local function Contains(Instance, X, Y)
 end
 
 local function UpdateTitleBar(Instance)
-	if Instance ~= nil and Instance.Title ~= "" and Instance.SizerType == SizerType.None and Instance.AllowMove then
+	if Instance ~= nil and Instance.Title ~= "" and Instance.SizerType == Sizer.GetTypes().None and Instance.AllowMove then
 		local W = Instance.W
 		local H = Style.Font:getHeight()
 		local X = Instance.X
@@ -169,28 +158,9 @@ local function UpdateTitleBar(Instance)
 	end
 end
 
-local function IsSizerEnabled(Instance, Sizer)
-	if Instance ~= nil then
-		if #Instance.SizerFilter > 0 then
-			for I, V in ipairs(Instance.SizerFilter) do
-				if V == Sizer then
-					return true
-				end
-			end
-			return false
-		end
-		return true
-	end
-	return false
-end
-
 local function UpdateSize(Instance, IsObstructed)
 	if Instance ~= nil and Instance.AllowResize then
-		if Region.IsHoverScrollBar(Instance.Id) then
-			return
-		end
-
-		if Instance.SizerType == SizerType.None and IsObstructed then
+		if Instance.SizerType == Sizer.GetTypes().None and IsObstructed then
 			return
 		end
 
@@ -205,37 +175,15 @@ local function UpdateSize(Instance, IsObstructed)
 			H = H + Offset
 		end
 
-		local MouseX, MouseY = Mouse.Position()
-		local NewSizerType = SizerType.None
-		local ScrollPad = Region.GetScrollPad()
-
-		if X <= MouseX and MouseX <= X + W and Y <= MouseY and MouseY <= Y + H then
-			if X <= MouseX and MouseX <= X + ScrollPad and Y <= MouseY and MouseY <= Y + ScrollPad and IsSizerEnabled(Instance, "NW") then
-				Mouse.SetCursor('sizenwse')
-				NewSizerType = SizerType.NW
-			elseif X + W - ScrollPad <= MouseX and MouseX <= X + W and Y <= MouseY and MouseY <= Y + ScrollPad and IsSizerEnabled(Instance, "NE") then
-				Mouse.SetCursor('sizenesw')
-				NewSizerType = SizerType.NE
-			elseif X + W - ScrollPad <= MouseX and MouseX <= X + W and Y + H - ScrollPad <= MouseY and MouseY <= Y + H and IsSizerEnabled(Instance, "SE") then
-				Mouse.SetCursor('sizenwse')
-				NewSizerType = SizerType.SE
-			elseif X <= MouseX and MouseX <= X + ScrollPad and Y + H - ScrollPad <= MouseY and MouseY <= Y + H and IsSizerEnabled(Instance, "SW") then
-				Mouse.SetCursor('sizenesw')
-				NewSizerType = SizerType.SW
-			elseif X <= MouseX and MouseX <= X + ScrollPad and IsSizerEnabled(Instance, "W") then
-				Mouse.SetCursor('sizewe')
-				NewSizerType = SizerType.W
-			elseif X + W - ScrollPad <= MouseX and MouseX <= X + W and IsSizerEnabled(Instance, "E") then
-				Mouse.SetCursor('sizewe')
-				NewSizerType = SizerType.E
-			elseif Y <= MouseY and MouseY <= Y + ScrollPad and IsSizerEnabled(Instance, "N") then
-				Mouse.SetCursor('sizens')
-				NewSizerType = SizerType.N
-			elseif Y + H - ScrollPad <= MouseY and MouseY <= Y + H and IsSizerEnabled(Instance, "S") then
-				Mouse.SetCursor('sizens')
-				NewSizerType = SizerType.S
-			end
-		end
+		local NewX, NewY, NewW, NewH, NewSizerType = Sizer.Update({
+			X = X,
+			Y = Y,
+			W = W,
+			H = H,
+			Filter = Instance.SizerFilter,
+			ForcedSizer = Instance.SizerType
+		})
+		local SizerType = Sizer.GetTypes()
 
 		if Mouse.IsClicked(1) then
 			Instance.SizerType = NewSizerType
@@ -244,81 +192,16 @@ local function UpdateSize(Instance, IsObstructed)
 		end
 
 		if Instance.SizerType ~= SizerType.None then
-			local DeltaX, DeltaY = Mouse.GetDelta()
-
-			if Instance.W <= Instance.Border then
-				if (Instance.SizerType == SizerType.W or
-					Instance.SizerType == SizerType.NW or
-					Instance.SizerType == SizerType.SW) and
-					DeltaX > 0.0 then
-					DeltaX = 0.0
-				end
-
-				if (Instance.SizerType == SizerType.E or
-					Instance.SizerType == SizerType.NE or
-					Instance.SizerType == SizerType.SE) and
-					DeltaX < 0.0 then
-					DeltaX = 0.0
-				end
-			end
-
-			if Instance.H <= Instance.Border then
-				if (Instance.SizerType == SizerType.N or
-					Instance.SizerType == SizerType.NW or
-					Instance.SizerType == SizerType.NE) and
-					DeltaY > 0.0 then
-					DeltaY = 0.0
-				end
-
-				if (Instance.SizerType == SizerType.S or
-					Instance.SizerType == SizerType.SE or
-					Instance.SizerType == SizerType.SW) and
-					DeltaY < 0.0 then
-					DeltaY = 0.0
-				end
-			end
-
 			if DeltaX ~= 0.0 or DeltaY ~= 0.0 then
 				Instance.HasResized = true
 				Instance.DeltaContentW = 0.0
 				Instance.DeltaContentH = 0.0
 			end
 
-			if Instance.SizerType == SizerType.N then
-				Mouse.SetCursor('sizens')
-				Instance.TitleDeltaY = Instance.TitleDeltaY + DeltaY
-				Instance.SizeDeltaY = Instance.SizeDeltaY - DeltaY
-			elseif Instance.SizerType == SizerType.E then
-				Mouse.SetCursor('sizewe')
-				Instance.SizeDeltaX = Instance.SizeDeltaX + DeltaX
-			elseif Instance.SizerType == SizerType.S then
-				Mouse.SetCursor('sizens')
-				Instance.SizeDeltaY = Instance.SizeDeltaY + DeltaY
-			elseif Instance.SizerType == SizerType.W then
-				Mouse.SetCursor('sizewe')
-				Instance.TitleDeltaX = Instance.TitleDeltaX + DeltaX
-				Instance.SizeDeltaX = Instance.SizeDeltaX - DeltaX
-			elseif Instance.SizerType == SizerType.NW then
-				Mouse.SetCursor('sizenwse')
-				Instance.TitleDeltaX = Instance.TitleDeltaX + DeltaX
-				Instance.SizeDeltaX = Instance.SizeDeltaX - DeltaX
-				Instance.TitleDeltaY = Instance.TitleDeltaY + DeltaY
-				Instance.SizeDeltaY = Instance.SizeDeltaY - DeltaY
-			elseif Instance.SizerType == SizerType.NE then
-				Mouse.SetCursor('sizenesw')
-				Instance.SizeDeltaX = Instance.SizeDeltaX + DeltaX
-				Instance.TitleDeltaY = Instance.TitleDeltaY + DeltaY
-				Instance.SizeDeltaY = Instance.SizeDeltaY - DeltaY
-			elseif Instance.SizerType == SizerType.SE then
-				Mouse.SetCursor('sizenwse')
-				Instance.SizeDeltaX = Instance.SizeDeltaX + DeltaX
-				Instance.SizeDeltaY = Instance.SizeDeltaY + DeltaY
-			elseif Instance.SizerType == SizerType.SW then
-				Mouse.SetCursor('sizenesw')
-				Instance.TitleDeltaX = Instance.TitleDeltaX + DeltaX
-				Instance.SizeDeltaX = Instance.SizeDeltaX - DeltaX
-				Instance.SizeDeltaY = Instance.SizeDeltaY + DeltaY
-			end
+			Instance.TitleDeltaX = Instance.TitleDeltaX + (NewX - X)
+			Instance.TitleDeltaY = Instance.TitleDeltaY + (NewY - Y)
+			Instance.SizeDeltaX = Instance.SizeDeltaX + (NewW - W)
+			Instance.SizeDeltaY = Instance.SizeDeltaY + (NewH - H)
 		end
 	end
 end
@@ -327,12 +210,24 @@ function Window.Top()
 	return ActiveInstance
 end
 
+function Window.IsActive()
+	if ActiveInstance ~= nil and ActiveInstance.Id ~= 'Global' then
+		return Tab.IsActive(ActiveInstance.Id)
+	end
+
+	return false
+end
+
 function Window.SetFrameNumber(FrameNumber)
 	CurrentFrameNumber = FrameNumber
 end
 
 function Window.IsObstructed(X, Y, SkipScrollCheck)
 	if Region.IsScrolling() then
+		return true
+	end
+
+	if Tab.Obstructs(X, Y) then
 		return true
 	end
 
@@ -378,6 +273,10 @@ function Window.Reset()
 end
 
 function Window.Begin(Id, Options)
+	if  not Tab.BeginWindow(Id, Options) then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Window', 'Slab')
 
 	Options = Options == nil and {} or Options
@@ -392,7 +291,7 @@ function Window.Begin(Id, Options)
 	Options.AllowMove = Options.AllowMove == nil and true or Options.AllowMove
 	Options.AllowResize = Options.AllowResize == nil and true or Options.AllowResize
 	Options.AllowFocus = Options.AllowFocus == nil and true or Options.AllowFocus
-	Options.Border = Options.Border == nil and 4.0 or Options.Border
+	Options.Border = Options.Border == nil and Style.WindowBorder or Options.Border
 	Options.NoOutline = Options.NoOutline == nil and false or Options.NoOutline
 	Options.IsMenuBar = Options.IsMenuBar == nil and false or Options.IsMenuBar
 	Options.AutoSizeWindow = Options.AutoSizeWindow == nil and true or Options.AutoSizeWindow
@@ -563,11 +462,17 @@ function Window.Begin(Id, Options)
 end
 
 function Window.End()
+	if not Tab.Pop() then
+		return
+	end
+
 	if ActiveInstance ~= nil then
 		local Handle = ActiveInstance.StatHandle
 		Region.End()
 		DrawCommands.End()
 		table.remove(PendingStack, 1)
+
+		Tab.EndWindow({ChannelIndex = ActiveInstance.StackIndex})
 
 		Cursor.SetPosition(ActiveInstance.LastCursorX, ActiveInstance.LastCursorY)
 		ActiveInstance = nil

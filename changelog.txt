@@ -1,9 +1,10 @@
 v0.7.0 RELEASE
 ==========
-[Tab]: Initial implementation of a container holding Window instances with tabs for each.
+[Color Picker]: Set initial position.
 [Dock]: Initial implementation of docking.
 [Separator]: Option to change the line thickness.
-[Color Picker]: Set initial position.
+[Style]: WindowBorder documentation.
+[Tab]: Documentation.
 
 BUGS
 ==========

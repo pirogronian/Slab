@@ -397,6 +397,10 @@ end
 function LayoutManager.Begin(Id, Options)
 	assert(Id ~= nil or type(Id) ~= string, "A valid string Id must be given to BeginLayout!")
 
+	if not Window.IsActive() then
+		return
+	end
+
 	Options = Options == nil and {} or Options
 	Options.AlignX = Options.AlignX == nil and 'left' or Options.AlignX
 	Options.AlignY = Options.AlignY == nil and 'top' or Options.AlignY

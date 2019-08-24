@@ -66,6 +66,10 @@ local function GetInstance(Id)
 end
 
 function Tree.Begin(Id, Options)
+	if not Window.IsActive() then
+		return false
+	end
+
 	local StatHandle = Stats.Begin('Tree', 'Slab')
 
 	Options = Options == nil and {} or Options
