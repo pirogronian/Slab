@@ -1,9 +1,9 @@
 v0.7.0 RELEASE
 ==========
-[Color Picker]: Set initial position.
 [Dock]: Initial implementation of docking.
 [Style]: WindowBorder documentation.
 [Tab]: Documentation.
+[Style Editor]: Scroll bar doesn't block rectangle.
 
 BUGS
 ==========

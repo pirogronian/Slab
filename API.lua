@@ -423,10 +423,12 @@ end
 
 	Retrieves the active window's position.
 
+	IncludeTitle: [Boolean] Should the Y position include the title bar. If false, will use the Y position of the body.
+
 	Return: [Number], [Number] The X and Y position of the active window.
 --]]
-function Slab.GetWindowPosition()
-	return Window.GetPosition()
+function Slab.GetWindowPosition(IncludeTitle)
+	return Window.GetPosition(IncludeTitle)
 end
 
 --[[
@@ -1421,6 +1423,8 @@ end
 	Return: [Table] Returns the button and color the user has selected.
 		Button: [String] The button the user clicked. Will either be OK or Cancel.
 		Color: [Table] The new color the user has chosen. This will always be returned.
+		X: [Number] The X position for the window.
+		Y: [Number] The Y position for the window.
 --]]
 function Slab.ColorPicker(Options)
 	return ColorPicker.Begin(Options)

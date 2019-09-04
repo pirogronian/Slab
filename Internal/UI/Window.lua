@@ -525,9 +525,15 @@ function Window.GetBounds(IgnoreTitleBar)
 	return 0.0, 0.0, 0.0, 0.0
 end
 
-function Window.GetPosition()
+function Window.GetPosition(IncludeTitle)
+	IncludeTitle = IncludeTitle == nil and true or IncludeTitle
+
 	if ActiveInstance ~= nil then
-		return ActiveInstance.X, ActiveInstance.Y
+		local X, Y = ActiveInstance.X, ActiveInstance.Y
+		if ActiveInstance.Title ~= "" and IncludeTitle then
+			Y = Y - Style.Font:getHeight()
+		end
+		return X, Y
 	end
 	return 0.0, 0.0
 end

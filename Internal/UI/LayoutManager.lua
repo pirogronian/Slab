@@ -118,7 +118,7 @@ end
 local function GetColumnPosition(Instance)
 	if Instance ~= nil then
 		local WinX, WinY, WinW, WinH = GetWindowBounds()
-		local WinL, WinT = Window.GetPosition()
+		local WinL, WinT = Window.GetPosition(false)
 		local Count = #Instance.Columns
 		local ColumnW = WinW / Count
 		local TotalW = 0
