@@ -61,18 +61,19 @@ local function IsScrollHovered(Instance, X, Y)
 	local HasScrollX, HasScrollY = false, false
 
 	if Instance ~= nil then
+		local WinX, WinY = Instance.X + Instance.DeltaX, Instance.Y + Instance.DeltaY
 		if Instance.HasScrollX then
-			local PosY = Instance.Y + Instance.H - ScrollPad - ScrollBarSize
+			local PosY = WinY + Instance.H - ScrollPad - ScrollBarSize
 			local SizeX = GetXScrollSize(Instance)
 			local PosX = Instance.ScrollPosX
-			HasScrollX = Instance.X + PosX <= X and X < Instance.X + PosX + SizeX and PosY <= Y and Y < PosY + ScrollBarSize
+			HasScrollX = WinX + PosX <= X and X < WinX + PosX + SizeX and PosY <= Y and Y < PosY + ScrollBarSize
 		end
 
 		if Instance.HasScrollY then
-			local PosX = Instance.X + Instance.W - ScrollPad - ScrollBarSize
+			local PosX = WinX + Instance.W - ScrollPad - ScrollBarSize
 			local SizeY = GetYScrollSize(Instance)
 			local PosY = Instance.ScrollPosY
-			HasScrollY = PosX <= X and X < PosX + ScrollBarSize and Instance.Y + PosY <= Y and Y < Instance.Y + PosY + SizeY
+			HasScrollY = PosX <= X and X < PosX + ScrollBarSize and WinY + PosY <= Y and Y < WinY + PosY + SizeY
 		end
 	end
 	return HasScrollX, HasScrollY
@@ -80,12 +81,37 @@ end
 
 local function Contains(Instance, X, Y)
 	if Instance ~= nil then
-		return Instance.X <= X and X <= Instance.X + Instance.W and Instance.Y <= Y and Y <= Instance.Y + Instance.H
+		local TestX = Instance.X + Instance.DeltaX
+		local TestY = Instance.Y + Instance.DeltaY
+		return TestX <= X and X <= TestX + Instance.W and TestY <= Y and Y <= TestY + Instance.H
 	end
 	return false
 end
 
-local function UpdateScrollBars(Instance, IsObstructed)
+local function UpdateMove(Instance, IsObstructed)
+	if Instance == nil or not Instance.CanMove or IsObstructed then
+		return
+	end
+
+	local MouseX, MouseY = Mouse.Position()
+	if Contains(Instance, MouseX, MouseY) then
+		if not Instance.IsMoving and Mouse.IsClicked(1) then
+			Instance.IsMoving = true
+		end
+	end
+
+	if Instance.IsMoving then
+		local DeltaX, DeltaY = Mouse.GetDelta()
+		Instance.DeltaX = Instance.DeltaX + DeltaX
+		Instance.DeltaY = Instance.DeltaY + DeltaY
+
+		if Mouse.IsReleased(1) then
+			Instance.IsMoving = false
+		end
+	end
+end
+
+local function UpdateScrollBars(Instance, IsObstructed, X, Y)
 	if Instance.IgnoreScroll then
 		return
 	end
@@ -93,7 +119,6 @@ local function UpdateScrollBars(Instance, IsObstructed)
 	Instance.HasScrollX = Instance.ContentW > Instance.W
 	Instance.HasScrollY = Instance.ContentH > Instance.H
 
-	local X, Y = Instance.MouseX, Instance.MouseY
 	Instance.HoverScrollX, Instance.HoverScrollY = IsScrollHovered(Instance, X, Y)
 	local XSize = Instance.W - GetXScrollSize(Instance)
 	local YSize = Instance.H - GetYScrollSize(Instance)
@@ -203,6 +228,8 @@ local function DrawScrollBars(Instance)
 		Instance.ScrollAlphaY = 1.0
 	end
 
+	local WinX, WinY = Instance.X + Instance.DeltaX, Instance.Y + Instance.DeltaY
+
 	if Instance.HasScrollX then
 		local XSize = GetXScrollSize(Instance)
 		local Color = Utility.MakeColor(Style.ScrollBarColor)
@@ -211,7 +238,7 @@ local function DrawScrollBars(Instance)
 		end
 		Color[4] = Instance.ScrollAlphaX
 		local XPos = Instance.ScrollPosX
-		DrawCommands.Rectangle('fill', Instance.X + XPos, Instance.Y + Instance.H - ScrollPad - ScrollBarSize, XSize, ScrollBarSize, Color, Style.ScrollBarRounding)
+		DrawCommands.Rectangle('fill', WinX + XPos, WinY + Instance.H - ScrollPad - ScrollBarSize, XSize, ScrollBarSize, Color, Style.ScrollBarRounding)
 	end
 
 	if Instance.HasScrollY then
@@ -222,7 +249,7 @@ local function DrawScrollBars(Instance)
 		end
 		Color[4] = Instance.ScrollAlphaY
 		local YPos = Instance.ScrollPosY
-		DrawCommands.Rectangle('fill', Instance.X + Instance.W - ScrollPad - ScrollBarSize, Instance.Y + YPos, ScrollBarSize, YSize, Color, Style.ScrollBarRounding)
+		DrawCommands.Rectangle('fill', WinX + Instance.W - ScrollPad - ScrollBarSize, WinY + YPos, ScrollBarSize, YSize, Color, Style.ScrollBarRounding)
 	end
 end
 
@@ -254,6 +281,10 @@ local function GetInstance(Id)
 		Instance.ScrollAlphaY = 0.0
 		Instance.Intersect = false
 		Instance.AutoSizeContent = false
+		Instance.DeltaX = 0.0
+		Instance.DeltaY = 0.0
+		Instance.IsMoving = false
+		Instance.CanMove = false
 		Instance.Transform = love.math.newTransform()
 		Instance.Transform:reset()
 		Instances[Id] = Instance
@@ -278,23 +309,21 @@ function Region.Begin(Id, Options)
 	Options.IsObstructed = Options.IsObstructed == nil and false or Options.IsObstructed
 	Options.Intersect = Options.Intersect == nil and false or Options.Intersect
 	Options.IgnoreScroll = Options.IgnoreScroll == nil and false or Options.IgnoreScroll
-	Options.MouseX = Options.MouseX == nil and 0.0 or Options.MouseX
-	Options.MouseY = Options.MouseY == nil and 0.0 or Options.MouseY
 	Options.ResetContent = Options.ResetContent == nil and false or Options.ResetContent
 	Options.Rounding = Options.Rounding == nil and 0.0 or Options.Rounding
+	Options.CanMove = Options.CanMove == nil and false or Options.CanMove
 
 	local Instance = GetInstance(Id)
 	Instance.X = Options.X
 	Instance.Y = Options.Y
 	Instance.W = Options.W
 	Instance.H = Options.H
-	Instance.SX = Options.SX
-	Instance.SY = Options.SY
+	Instance.SX = Options.SX + Instance.DeltaX
+	Instance.SY = Options.SY + Instance.DeltaY
 	Instance.Intersect = Options.Intersect
 	Instance.IgnoreScroll = Options.IgnoreScroll
-	Instance.MouseX = Options.MouseX
-	Instance.MouseY = Options.MouseY
 	Instance.AutoSizeContent = Options.AutoSizeContent
+	Instance.CanMove = Options.CanMove
 
 	if Options.ResetContent then
 		Instance.ContentW = 0.0
@@ -306,16 +335,20 @@ function Region.Begin(Id, Options)
 		Instance.ContentH = Options.ContentH
 	end
 
+	local MouseX, MouseY = Mouse.Position()
+	MouseX, MouseY = Region.InverseTransform(nil, MouseX, MouseY)
+
 	ActiveInstance = Instance
 	table.insert(Stack, 1, ActiveInstance)
 
-	UpdateScrollBars(Instance, Options.IsObstructed)
+	UpdateMove(Instance, Options.IsObstructed)
+	UpdateScrollBars(Instance, Options.IsObstructed, MouseX, MouseY)
 
-	if HotInstance == Instance and not Contains(Instance, Instance.MouseX, Instance.MouseY) then
+	if HotInstance == Instance and not Contains(Instance, MouseX, MouseY) then
 		HotInstance = nil
 	end
 
-	if not IsObstructed and Contains(Instance, Instance.MouseX, Instance.MouseY) or (Instance.HoverScrollX or Instance.HoverScrollY) then
+	if not IsObstructed and Contains(Instance, MouseX, MouseY) or (Instance.HoverScrollX or Instance.HoverScrollY) then
 		if ScrollInstance == nil then
 			HotInstance = Instance
 		else
@@ -323,11 +356,14 @@ function Region.Begin(Id, Options)
 		end
 	end
 
+	local X = Instance.X + Instance.DeltaX
+	local Y = Instance.Y + Instance.DeltaY
+
 	if not Options.NoBackground then
-		DrawCommands.Rectangle('fill', Instance.X, Instance.Y, Instance.W, Instance.H, Options.BgColor, Options.Rounding)
+		DrawCommands.Rectangle('fill', X, Y, Instance.W, Instance.H, Options.BgColor, Options.Rounding)
 	end
 	if not Options.NoOutline then
-		DrawCommands.Rectangle('line', Instance.X, Instance.Y, Instance.W, Instance.H, nil, Options.Rounding)
+		DrawCommands.Rectangle('line', X, Y, Instance.W, Instance.H, nil, Options.Rounding)
 	end
 	DrawCommands.TransformPush()
 	DrawCommands.ApplyTransform(Instance.Transform)
@@ -459,9 +495,17 @@ function Region.ApplyScissor()
 	end
 end
 
+function Region.GetPosition(Id)
+	local Instance = GetInstance(Id)
+	if Instance ~= nil then
+		return Instance.X + Instance.DeltaX, Instance.Y + Instance.DeltaY
+	end
+	return 0, 0
+end
+
 function Region.GetBounds()
 	if ActiveInstance ~= nil then
-		return ActiveInstance.X, ActiveInstance.Y, ActiveInstance.W, ActiveInstance.H
+		return ActiveInstance.X + ActiveInstance.DeltaX, ActiveInstance.Y + ActiveInstance.DeltaY, ActiveInstance.W, ActiveInstance.H
 	end
 	return 0.0, 0.0, 0.0, 0.0
 end
@@ -475,7 +519,7 @@ end
 
 function Region.Contains(X, Y)
 	if ActiveInstance ~= nil then
-		return ActiveInstance.X <= X and X <= ActiveInstance.X + ActiveInstance.W and ActiveInstance.Y <= Y and Y <= ActiveInstance.Y + ActiveInstance.H
+		return Contains(ActiveInstance, X, Y)
 	end
 	return false
 end
@@ -514,6 +558,15 @@ function Region.IsScrolling(Id)
 	return ScrollInstance ~= nil or WheelInstance ~= nil
 end
 
+function Region.IsMouseHovered(Id)
+	local Instance = GetInstance(Id)
+	if Instance ~= nil then
+		local MouseX, MouseY = Mouse.Position()
+		return Contains(Instance, MouseX, MouseY)
+	end
+	return false
+end
+
 function Region.GetHotInstanceId()
 	if HotInstance ~= nil then
 		return HotInstance.Id
@@ -550,6 +603,10 @@ function Region.GetDebugInfo(Id)
 
 	if Instance ~= nil then
 		table.insert(Result, "Id: " .. Instance.Id)
+		table.insert(Result, "X: " .. Instance.X)
+		table.insert(Result, "Y: " .. Instance.Y)
+		table.insert(Result, "DeltaX: " .. Instance.DeltaX)
+		table.insert(Result, "DeltaY: " .. Instance.DeltaY)
 		table.insert(Result, "W: " .. Instance.W)
 		table.insert(Result, "H: " .. Instance.H)
 		table.insert(Result, "ContentW: " .. Instance.ContentW)

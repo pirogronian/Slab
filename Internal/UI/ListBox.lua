@@ -123,8 +123,6 @@ function ListBox.Begin(Id, Options)
 		AutoSizeContent = true,
 		NoBackground = true,
 		Intersect = true,
-		MouseX = MouseX,
-		MouseY = MouseY,
 		ResetContent = Window.HasResized(),
 		IsObstructed = IsObstructed,
 		Rounding = Options.Rounding

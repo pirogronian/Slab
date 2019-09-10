@@ -1220,8 +1220,6 @@ function Input.Begin(Id, Options)
 		BgColor = Options.BgColor,
 		SX = TX,
 		SY = TY,
-		MouseX = MouseX,
-		MouseY = MouseY,
 		Intersect = true,
 		IgnoreScroll = not Options.MultiLine,
 		Rounding = Options.Rounding,

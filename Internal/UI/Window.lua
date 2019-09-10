@@ -73,9 +73,6 @@ local function NewInstance(Id)
 	Instance.ContentW = 0.0
 	Instance.ContentH = 0.0
 	Instance.Title = ""
-	Instance.IsMoving = false
-	Instance.TitleDeltaX = 0.0
-	Instance.TitleDeltaY = 0.0
 	Instance.AllowMove = true
 	Instance.AllowResize = true
 	Instance.AllowFocus = true
@@ -125,37 +122,10 @@ local function Contains(Instance, X, Y)
 		if Instance.Title ~= "" then
 			OffsetY = Style.Font:getHeight()
 		end
-		return Instance.X <= X and X <= Instance.X + Instance.W and Instance.Y - OffsetY <= Y and Y <= Instance.Y + Instance.H
+		local WinX, WinY = Region.GetPosition(Instance.Id)
+		return WinX <= X and X <= WinX + Instance.W and WinY - OffsetY <= Y and Y <= WinY + Instance.H
 	end
 	return false
-end
-
-local function UpdateTitleBar(Instance)
-	if Instance ~= nil and Instance.Title ~= "" and Instance.SizerType == Sizer.GetTypes().None and Instance.AllowMove then
-		local W = Instance.W
-		local H = Style.Font:getHeight()
-		local X = Instance.X
-		local Y = Instance.Y - H
-
-		local MouseX, MouseY = Mouse.Position()
-
-		if Mouse.IsClicked(1) and not Window.IsObstructed(MouseX, MouseY) then
-			if X <= MouseX and MouseX <= X + W and Y <= MouseY and MouseY <= Y + H then
-				Instance.IsMoving = true
-				if Instance.AllowFocus then
-					PushToTop(Instance)
-				end
-			end
-		elseif Mouse.IsReleased(1) then
-			Instance.IsMoving = false
-		end
-
-		if Instance.IsMoving then
-			local DeltaX, DeltaY = Mouse.GetDelta()
-			Instance.TitleDeltaX = Instance.TitleDeltaX + DeltaX
-			Instance.TitleDeltaY = Instance.TitleDeltaY + DeltaY
-		end
-	end
 end
 
 local function UpdateSize(Instance, IsObstructed)
@@ -198,8 +168,6 @@ local function UpdateSize(Instance, IsObstructed)
 				Instance.DeltaContentH = 0.0
 			end
 
-			Instance.TitleDeltaX = Instance.TitleDeltaX + (NewX - X)
-			Instance.TitleDeltaY = Instance.TitleDeltaY + (NewY - Y)
 			Instance.SizeDeltaX = Instance.SizeDeltaX + (NewW - W)
 			Instance.SizeDeltaY = Instance.SizeDeltaY + (NewH - H)
 		end
@@ -346,8 +314,8 @@ function Window.Begin(Id, Options)
 		Options.ResetSize = true
 	end
 
-	ActiveInstance.X = ActiveInstance.TitleDeltaX + Options.X
-	ActiveInstance.Y = ActiveInstance.TitleDeltaY + Options.Y
+	ActiveInstance.X = Options.X
+	ActiveInstance.Y = Options.Y
 	ActiveInstance.W = math.max(ActiveInstance.SizeDeltaX + Options.W + Options.Border, Options.Border)
 	ActiveInstance.H = math.max(ActiveInstance.SizeDeltaY + Options.H + Options.Border, Options.Border)
 	ActiveInstance.ContentW = Options.ContentW
@@ -399,44 +367,49 @@ function Window.Begin(Id, Options)
 		PushToTop(ActiveInstance)
 	end
 
-	Instance.LastCursorX, Instance.LastCursorY = Cursor.GetPosition()
-	Cursor.SetPosition(ActiveInstance.X + ActiveInstance.Border, ActiveInstance.Y + ActiveInstance.Border)
-	Cursor.SetAnchor(ActiveInstance.X + ActiveInstance.Border, ActiveInstance.Y + ActiveInstance.Border)
-
 	UpdateSize(ActiveInstance, IsObstructed)
-	UpdateTitleBar(ActiveInstance)
+
+	local WinX, WinY = ActiveInstance.X, ActiveInstance.Y
 
 	DrawCommands.SetLayer(ActiveInstance.Layer)
-
 	DrawCommands.Begin({Channel = ActiveInstance.StackIndex})
 	if ActiveInstance.Title ~= "" then
-		local TitleX = math.floor(ActiveInstance.X + (ActiveInstance.W * 0.5) - (Style.Font:getWidth(ActiveInstance.Title) * 0.5))
 		local TitleColor = ActiveInstance.BackgroundColor
 		if ActiveInstance == Stack[1] then
 			TitleColor = Style.WindowTitleFocusedColor
 		end
-		DrawCommands.Rectangle('fill', ActiveInstance.X, ActiveInstance.Y - OffsetY, ActiveInstance.W, OffsetY, TitleColor, TitleRounding)
-		DrawCommands.Rectangle('line', ActiveInstance.X, ActiveInstance.Y - OffsetY, ActiveInstance.W, OffsetY, nil, TitleRounding)
-		DrawCommands.Line(ActiveInstance.X, ActiveInstance.Y, ActiveInstance.X + ActiveInstance.W, ActiveInstance.Y, 1.0)
 
 		Region.Begin(ActiveInstance.Id .. '_Title', {
 			X = ActiveInstance.X,
 			Y = ActiveInstance.Y - OffsetY,
 			W = ActiveInstance.W,
 			H = OffsetY,
-			NoBackground = true,
-			NoOutline = true,
+			BgColor = TitleColor,
+			Rounding = TitleRounding,
 			IgnoreScroll = true,
-			MouseX = MouseX,
-			MouseY = MouseY
+			CanMove = Instance.AllowMove,
+			IsObstructed = IsObstructed
 		})
-		DrawCommands.Print(ActiveInstance.Title, TitleX, math.floor(ActiveInstance.Y - OffsetY), Style.TextColor, Style.Font)
+
+		local X, Y, W, H = Region.GetBounds()
+		local TitleX = math.floor(X + W * 0.5 - Style.Font:getWidth(ActiveInstance.Title) * 0.5)
+		WinX, WinY = X, Y
+		DrawCommands.Print(ActiveInstance.Title, TitleX, Y, Style.TextColor, Style.Font)
+
+		if Region.IsMouseHovered() and Mouse.IsClicked(1) and not Window.IsObstructedAtMouse() then
+			if ActiveInstance.AllowFocus then
+				PushToTop(ActiveInstance)
+			end
+		end
+
 		Region.End()
 	end
 
+	WinY = WinY + OffsetY
+
 	Region.Begin(ActiveInstance.Id, {
-		X = ActiveInstance.X,
-		Y = ActiveInstance.Y,
+		X = WinX,
+		Y = WinY,
 		W = ActiveInstance.W,
 		H = ActiveInstance.H,
 		ContentW = ActiveInstance.ContentW + ActiveInstance.Border,
@@ -449,6 +422,10 @@ function Window.Begin(Id, Options)
 		Rounding = BodyRounding,
 		NoOutline = Options.NoOutline
 	})
+
+	ActiveInstance.LastCursorX, ActiveInstance.LastCursorY = Cursor.GetPosition()
+	Cursor.SetPosition(WinX + ActiveInstance.Border, WinY + ActiveInstance.Border)
+	Cursor.SetAnchor(WinX + ActiveInstance.Border, WinY + ActiveInstance.Border)
 
 	if Options.ResetSize then
 		ActiveInstance.SizeDeltaX = 0.0
@@ -478,7 +455,8 @@ function Window.End()
 		ActiveInstance = nil
 		if #PendingStack > 0 then
 			ActiveInstance = PendingStack[1]
-			Cursor.SetAnchor(ActiveInstance.X + ActiveInstance.Border, ActiveInstance.Y + ActiveInstance.Border)
+			local X, Y = Region.GetPosition()
+			Cursor.SetAnchor(X + ActiveInstance.Border, Y + ActiveInstance.Border)
 			DrawCommands.SetLayer(ActiveInstance.Layer)
 			Region.ApplyScissor()
 		end
@@ -520,7 +498,8 @@ function Window.GetBounds(IgnoreTitleBar)
 	if ActiveInstance ~= nil then
 		IgnoreTitleBar = IgnoreTitleBar == nil and false or IgnoreTitleBar
 		local OffsetY = (ActiveInstance.Title ~= "" and not IgnoreTitleBar) and Style.Font:getHeight() or 0.0
-		return ActiveInstance.X, ActiveInstance.Y - OffsetY, ActiveInstance.W, ActiveInstance.H + OffsetY
+		local X, Y = Region.GetPosition()
+		return X, Y - OffsetY, ActiveInstance.W, ActiveInstance.H + OffsetY
 	end
 	return 0.0, 0.0, 0.0, 0.0
 end
@@ -529,7 +508,7 @@ function Window.GetPosition(IncludeTitle)
 	IncludeTitle = IncludeTitle == nil and true or IncludeTitle
 
 	if ActiveInstance ~= nil then
-		local X, Y = ActiveInstance.X, ActiveInstance.Y
+		local X, Y = Region.GetPosition()
 		if ActiveInstance.Title ~= "" and IncludeTitle then
 			Y = Y - Style.Font:getHeight()
 		end
@@ -600,17 +579,18 @@ function Window.AddItem(X, Y, W, H, Id)
 	if ActiveInstance ~= nil then
 		ActiveInstance.LastItem = Id
 		if Region.IsActive(ActiveInstance.Id) then
+			local WinX, WinY = Region.GetPosition()
 			if ActiveInstance.AutoSizeWindowW then
-				ActiveInstance.SizeDeltaX = math.max(ActiveInstance.SizeDeltaX, X + W - ActiveInstance.X)
+				ActiveInstance.SizeDeltaX = math.max(ActiveInstance.SizeDeltaX, X + W - WinX)
 			end
 
 			if ActiveInstance.AutoSizeWindowH then
-				ActiveInstance.SizeDeltaY = math.max(ActiveInstance.SizeDeltaY, Y + H - ActiveInstance.Y)
+				ActiveInstance.SizeDeltaY = math.max(ActiveInstance.SizeDeltaY, Y + H - WinY)
 			end
 
 			if ActiveInstance.AutoSizeContent then
-				ActiveInstance.DeltaContentW = math.max(ActiveInstance.DeltaContentW, X + W - ActiveInstance.X)
-				ActiveInstance.DeltaContentH = math.max(ActiveInstance.DeltaContentH, Y + H - ActiveInstance.Y)
+				ActiveInstance.DeltaContentW = math.max(ActiveInstance.DeltaContentW, X + W - WinX)
+				ActiveInstance.DeltaContentH = math.max(ActiveInstance.DeltaContentH, Y + H - WinY)
 			end
 		else
 			Region.AddItem(X, Y, W, H)

@@ -431,7 +431,6 @@ function Dialog.FileDialog(Options)
 		Text.Begin(ActiveInstance.Directory)
 
 		local CursorX, CursorY = Cursor.GetPosition()
-		local MouseX, MouseY = Window.GetMousePosition()
 		Region.Begin('FileDialog_DirectoryExplorer', {
 			X = CursorX,
 			Y = CursorY,
@@ -440,8 +439,6 @@ function Dialog.FileDialog(Options)
 			AutoSizeContent = true,
 			NoBackground = true,
 			Intersect = true,
-			MouseX = MouseX,
-			MouseY = MouseY,
 			IsObstructed = Window.IsObstructedAtMouse(),
 			Rounding = Style.WindowRounding
 		})

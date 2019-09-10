@@ -1,9 +1,12 @@
 v0.7.0 RELEASE
 ==========
 [Dock]: Initial implementation of docking.
+[Region]: Implement resize.
+[Scroll Bar]: Fix overlapping scroll bar focus.
 [Style]: WindowBorder documentation.
 [Tab]: Documentation.
 [Style Editor]: Scroll bar doesn't block rectangle.
+[Window]: Deprecate resizing.
 
 BUGS
 ==========
@@ -42,7 +45,6 @@ Dialog: Modal/Non-modal dialogs.
 License: Show license for Kenney.nl assets.
 Main Menu Bar: Assert if called within a window context.
 [Menu]: Radio button like menu items.
-Region: Clamp position check with owning window's size.
 [Scroll Bar]: Velocity based movement for mouse wheel scrolling.
 [Scroll Bar]: Focus owning window if scroll bar is clicked.
 [Slab]: Store settings such as window positions and style.
@@ -51,7 +53,6 @@ Region: Clamp position check with owning window's size.
 [SlabDebug]: Window management tools.
 [Stats]: Draw time draw command.
 [Stats]: Simple API access with list of stat names to display.
-Style: Add documentation for each style property.
 [Style]: API documentation.
 [Table]: Initial implementation.
 [Text]: Tooltip support.
