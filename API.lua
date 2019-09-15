@@ -421,10 +421,12 @@ end
 
 	Retrieves the active window's position.
 
+	IncludeTitle: [Boolean] Should the Y position include the title bar. If false, will use the Y position of the body.
+
 	Return: [Number], [Number] The X and Y position of the active window.
 --]]
-function Slab.GetWindowPosition()
-	return Window.GetPosition()
+function Slab.GetWindowPosition(IncludeTitle)
+	return Window.GetPosition(IncludeTitle)
 end
 
 --[[

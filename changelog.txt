@@ -1,6 +1,5 @@
 v0.7.0 RELEASE
 ==========
-[Color Picker]: Set initial position.
 [Dock]: Initial implementation of docking.
 [Tab]: Initial implementation of a container holding Window instances with tabs for each.
 

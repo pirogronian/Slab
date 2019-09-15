@@ -239,6 +239,8 @@ end
 function ColorPicker.Begin(Options)
 	Options = Options == nil and {} or Options
 	Options.Color = Options.Color == nil and {1.0, 1.0, 1.0, 1.0} or Options.Color
+	Options.X = Options.X == nil and nil or Options.X
+	Options.Y = Options.Y == nil and nil or Options.Y
 
 	if SaturationMeshes == nil then
 		InitializeSaturationMeshes()
@@ -261,7 +263,7 @@ function ColorPicker.Begin(Options)
 		UpdateSaturationColors()
 	end
 
-	Window.Begin('ColorPicker', {Title = "Color Picker"})
+	Window.Begin('ColorPicker', {Title = "Color Picker", X = Options.X, Y = Options.Y})
 
 	local X, Y = Cursor.GetPosition()
 	local MouseX, MouseY = Window.GetMousePosition()
