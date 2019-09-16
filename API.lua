@@ -1944,17 +1944,24 @@ end
 	be visible and allows the user to select the next visible window. This affects all windows placed in between
 	the BeginTab/EndTab calls. However, the Tab system will override certain options of a window. Tabbed windows
 	cannot be auto-sized and will be forced to have a fixed width and height which will carry over to all other
-	windows.
+	windows. All BeginTab calls should have a corresponding EndTab call.
 
 	Id: [String] The Id of this tab window.
 	Options: [Table] The list of options that control how this Tab behaves. Currently not used.
 
-	Return: None
+	Return: None.
 --]]
 function Slab.BeginTab(Id, Options)
 	Tab.Begin(Id, Options)
 end
 
+--[[
+	EndTab
+
+	Ends the process of collecting windows to be displayed in a tabbed window.
+
+	Return: None.
+--]]
 function Slab.EndTab()
 	Tab.End(Window.IsObstructedAtMouse())
 end
