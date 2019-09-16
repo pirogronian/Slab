@@ -31,6 +31,7 @@ local Mouse = require(SLAB_PATH .. ".Internal.Input.Mouse")
 local Region = require(SLAB_PATH .. ".Internal.UI.Region")
 local Stats = require(SLAB_PATH .. ".Internal.Core.Stats")
 local Style = require(SLAB_PATH .. ".Style")
+local Tab = require(SLAB_PATH .. ".Internal.UI.Tab")
 local Utility = require(SLAB_PATH .. ".Internal.Core.Utility")
 
 local Window = {}
@@ -142,7 +143,11 @@ local function Contains(Instance, X, Y)
 end
 
 local function UpdateTitleBar(Instance)
-	if Instance ~= nil and Instance.Title ~= "" and Instance.SizerType == SizerType.None and Instance.AllowMove then
+	if Instance ~= nil and Instance.SizerType == SizerType.None and Instance.AllowMove then
+		if Instance.Title == "" and not Tab.IsWindowActive(Instance.Id) then
+			return
+		end
+
 		local W = Instance.W
 		local H = Style.Font:getHeight()
 		local X = Instance.X
@@ -199,7 +204,7 @@ local function UpdateSize(Instance, IsObstructed)
 		local W = Instance.W
 		local H = Instance.H
 
-		if Instance.Title ~= "" then
+		if Instance.Title ~= "" or Tab.IsWindowActive(Instance.Id) then
 			local Offset = Style.Font:getHeight()
 			Y = Y - Offset
 			H = H + Offset
@@ -377,9 +382,19 @@ function Window.Reset()
 	table.insert(PendingStack, 1, ActiveInstance)
 end
 
-function Window.Begin(Id, Options)
-	local StatHandle = Stats.Begin('Window', 'Slab')
+function Window.IsActive()
+	if ActiveInstance ~= nil and ActiveInstance.Id ~= 'Global' then
+		if Tab.IsActive() then
+			return Tab.IsWindowActive(ActiveInstance.Id)
+		end
 
+		return true
+	end
+
+	return false
+end
+
+function Window.Begin(Id, Options)
 	Options = Options == nil and {} or Options
 	Options.X = Options.X == nil and 50.0 or Options.X
 	Options.Y = Options.Y == nil and 50.0 or Options.Y
@@ -408,13 +423,19 @@ function Window.Begin(Id, Options)
 	Options.CanObstruct = Options.CanObstruct == nil and true or Options.CanObstruct
 	Options.Rounding = Options.Rounding == nil and Style.WindowRounding or Options.Rounding
 
+	if not Tab.BeginWindow(Id, Options) then
+		return
+	end
+
+	local StatHandle = Stats.Begin('Window', 'Slab')
+
 	local TitleRounding = {Options.Rounding, Options.Rounding, 0, 0}
 	local BodyRounding = {0, 0, Options.Rounding, Options.Rounding}
 
 	if type(Options.Rounding) == 'table' then
 		TitleRounding = Options.Rounding
 		BodyRounding = Options.Rounding
-	elseif Options.Title == "" then
+	elseif Options.Title == "" and not Tab.IsWindowActive(Id) then
 		BodyRounding = Options.Rounding
 	end
 
@@ -445,6 +466,11 @@ function Window.Begin(Id, Options)
 
 	if ActiveInstance.Border ~= Options.Border then
 		Options.ResetSize = true
+	end
+
+	if Options.ResetSize and not Options.AutoSizeWindow then
+		ActiveInstance.SizeDeltaX = 0
+		ActiveInstance.SizeDeltaY = 0
 	end
 
 	ActiveInstance.X = ActiveInstance.TitleDeltaX + Options.X
@@ -484,7 +510,7 @@ function Window.Begin(Id, Options)
 	end
 
 	local OffsetY = 0.0
-	if ActiveInstance.Title ~= "" then
+	if ActiveInstance.Title ~= "" or Tab.IsWindowActive(ActiveInstance.Id) then
 		OffsetY = Style.Font:getHeight()
 		ActiveInstance.Y = ActiveInstance.Y + OffsetY
 
@@ -503,6 +529,13 @@ function Window.Begin(Id, Options)
 	Instance.LastCursorX, Instance.LastCursorY = Cursor.GetPosition()
 	Cursor.SetPosition(ActiveInstance.X + ActiveInstance.Border, ActiveInstance.Y + ActiveInstance.Border)
 	Cursor.SetAnchor(ActiveInstance.X + ActiveInstance.Border, ActiveInstance.Y + ActiveInstance.Border)
+
+	Tab.ApplyWindowDelta(
+		ActiveInstance.TitleDeltaX,
+		ActiveInstance.TitleDeltaY,
+		ActiveInstance.SizeDeltaX,
+		ActiveInstance.SizeDeltaY
+	)
 
 	UpdateSize(ActiveInstance, IsObstructed)
 	UpdateTitleBar(ActiveInstance)
@@ -551,7 +584,7 @@ function Window.Begin(Id, Options)
 		NoOutline = Options.NoOutline
 	})
 
-	if Options.ResetSize then
+	if Options.ResetSize and Options.AutoSizeWindow then
 		ActiveInstance.SizeDeltaX = 0.0
 		ActiveInstance.SizeDeltaY = 0.0
 	end
@@ -564,6 +597,15 @@ end
 
 function Window.End()
 	if ActiveInstance ~= nil then
+		local Options = {
+			Layer = ActiveInstance.Layer,
+			Channel = ActiveInstance.StackIndex
+		}
+
+		if not Tab.EndWindow(ActiveInstance.Id, Options) then
+			return
+		end
+
 		local Handle = ActiveInstance.StatHandle
 		Region.End()
 		DrawCommands.End()
@@ -882,6 +924,8 @@ function Window.GetInstanceInfo(Id)
 		table.insert(Result, "H: " .. Instance.H)
 		table.insert(Result, "ContentW: " .. Instance.ContentW)
 		table.insert(Result, "ContentH: " .. Instance.ContentH)
+		table.insert(Result, "TitleDeltaX: " .. Instance.TitleDeltaX)
+		table.insert(Result, "TitleDeltaY: " .. Instance.TitleDeltaY)
 		table.insert(Result, "SizeDeltaX: " .. Instance.SizeDeltaX)
 		table.insert(Result, "SizeDeltaY: " .. Instance.SizeDeltaY)
 		table.insert(Result, "DeltaContentW: " .. Instance.DeltaContentW)

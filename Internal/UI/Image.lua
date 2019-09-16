@@ -57,6 +57,10 @@ local function GetInstance(Id)
 end
 
 function Image.Begin(Id, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Image', 'Slab')
 
 	Options = Options == nil and {} or Options

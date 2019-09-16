@@ -49,6 +49,7 @@ local Separator = require(SLAB_PATH .. '.Internal.UI.Separator')
 local Shape = require(SLAB_PATH .. '.Internal.UI.Shape')
 local Stats = require(SLAB_PATH .. '.Internal.Core.Stats')
 local Style = require(SLAB_PATH .. '.Style')
+local Tab = require(SLAB_PATH .. '.Internal.UI.Tab')
 local Text = require(SLAB_PATH .. '.Internal.UI.Text')
 local Tree = require(SLAB_PATH .. '.Internal.UI.Tree')
 local Window = require(SLAB_PATH .. '.Internal.UI.Window')
@@ -306,6 +307,7 @@ function Slab.Draw()
 	local StatHandle = Stats.Begin('Draw', 'Slab')
 
 	Window.Validate()
+	Tab.Validate()
 
 	if MenuState.RequestClose then
 		Menu.Close()
@@ -1933,6 +1935,28 @@ end
 --]]
 function Slab.GetLayoutSize()
 	return LayoutManager.GetActiveSize()
+end
+
+--[[
+	BeginTab
+
+	Begins the process of collecting windows to be displayed in a tabbed window. This controls which window should
+	be visible and allows the user to select the next visible window. This affects all windows placed in between
+	the BeginTab/EndTab calls. However, the Tab system will override certain options of a window. Tabbed windows
+	cannot be auto-sized and will be forced to have a fixed width and height which will carry over to all other
+	windows.
+
+	Id: [String] The Id of this tab window.
+	Options: [Table] The list of options that control how this Tab behaves. Currently not used.
+
+	Return: None
+--]]
+function Slab.BeginTab(Id, Options)
+	Tab.Begin(Id, Options)
+end
+
+function Slab.EndTab()
+	Tab.End(Window.IsObstructedAtMouse())
 end
 
 return Slab

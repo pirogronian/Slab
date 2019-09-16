@@ -35,6 +35,10 @@ local Window = require(SLAB_PATH .. '.Internal.UI.Window')
 local Text = {}
 
 function Text.Begin(Label, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Text', 'Slab')
 
 	Options = Options == nil and {} or Options

@@ -42,6 +42,10 @@ local Radius = 8.0
 local ClickedId = nil
 
 function Button.Begin(Label, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Button', 'Slab')
 
 	Options = Options == nil and {} or Options
@@ -121,6 +125,9 @@ function Button.Begin(Label, Options)
 end
 
 function Button.BeginRadio(Label, Options)
+	if not Window.IsActive() then
+	end
+
 	local StatHandle = Stats.Begin('RadioButton', 'Slab')
 
 	Label = Label == nil and "" or Label

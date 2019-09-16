@@ -33,6 +33,10 @@ local Separator = {}
 local SIZE_Y = 4.0
 
 function Separator.Begin(Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	Options = Options == nil and {} or Options
 	Options.IncludeBorders = Options.IncludeBorders == nil and false or Options.IncludeBorders
 	Options.H = Options.H == nil and SIZE_Y or Options.H

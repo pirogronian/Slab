@@ -1,7 +1,12 @@
 v0.7.0 RELEASE
 ==========
 [Dock]: Initial implementation of docking.
-[Tab]: Initial implementation of a container holding Window instances with tabs for each.
+[Slab Test]: Create example for using the Tab API.
+[Tab]: Push focused window to front of title list if not visible.
+[Tab]: Focused title bar color if single window is set.
+[Tab]: Obstruction check on tab windows.
+[Tab]: Early out of rendering hidden titles.
+[Tab]: Investigate use of LayoutManager within a tab.
 
 BUGS
 ==========

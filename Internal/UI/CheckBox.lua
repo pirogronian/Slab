@@ -37,6 +37,10 @@ local Window = require(SLAB_PATH .. '.Internal.UI.Window')
 local CheckBox = {}
 
 function CheckBox.Begin(Enabled, Label, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('CheckBox', 'Slab')
 
 	Label = Label == nil and "" or Label

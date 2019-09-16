@@ -35,6 +35,10 @@ local Curve = nil
 local CurveX, CurveY = 0, 0
 
 function Shape.Rectangle(Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Rectangle', 'Slab')
 
 	Options = Options == nil and {} or Options
@@ -67,6 +71,10 @@ function Shape.Rectangle(Options)
 end
 
 function Shape.Circle(Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Circle', 'Slab')
 
 	Options = Options == nil and {} or Options
@@ -92,6 +100,10 @@ function Shape.Circle(Options)
 end
 
 function Shape.Triangle(Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Triangle', 'Slab')
 
 	Options = Options == nil and {} or Options
@@ -117,6 +129,10 @@ function Shape.Triangle(Options)
 end
 
 function Shape.Line(X2, Y2, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Line', 'Slab')
 
 	Options = Options == nil and {} or Options
@@ -136,6 +152,10 @@ function Shape.Line(X2, Y2, Options)
 end
 
 function Shape.Curve(Points, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Curve', 'Slab')
 
 	Options = Options == nil and {} or Options
@@ -220,6 +240,10 @@ function Shape.EvaluateCurve(Time, Options)
 end
 
 function Shape.Polygon(Points, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Polygon', 'Slab')
 
 	Options = Options == nil and {} or Options

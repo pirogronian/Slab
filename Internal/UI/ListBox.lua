@@ -73,6 +73,10 @@ local function GetInstance(Id)
 end
 
 function ListBox.Begin(Id, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('ListBox', 'Slab')
 
 	Options = Options == nil and {} or Options
@@ -187,6 +191,10 @@ function ListBox.EndItem()
 end
 
 function ListBox.End()
+	if not Window.IsActive() then
+		return
+	end
+
 	assert(ActiveInstance ~= nil, "EndListBox was called without calling BeginListBox.")
 	Region.End()
 	Region.ApplyScissor()
