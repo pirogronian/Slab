@@ -133,7 +133,11 @@ end
 
 local function Contains(Instance, X, Y)
 	if Instance ~= nil then
-		local OffsetY = 0.0
+		if Tab.Contains(Instance.Id, X, Y) then
+			return true
+		end
+
+		local OffsetY = 0
 		if Instance.Title ~= "" then
 			OffsetY = Style.Font:getHeight()
 		end

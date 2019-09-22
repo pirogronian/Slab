@@ -4,7 +4,6 @@ v0.7.0 RELEASE
 [Slab Test]: Create example for using the Tab API.
 [Tab]: Push focused window to front of title list if not visible.
 [Tab]: Focused title bar color if single window is set.
-[Tab]: Obstruction check on tab windows.
 [Tab]: Early out of rendering hidden titles.
 [Tab]: Investigate use of LayoutManager within a tab.
 

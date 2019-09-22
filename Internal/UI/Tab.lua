@@ -32,6 +32,7 @@ local Style = require(SLAB_PATH .. '.Style')
 local Tab = {}
 
 local Instances = {}
+local WindowToTab = {}
 local Active = nil
 local SelectorInstance = nil
 local Stack = {}
@@ -170,6 +171,7 @@ function Tab.BeginWindow(Id, Options)
 		end
 
 		table.insert(Active.Windows, {Id = Id, Title = Title})
+		WindowToTab[Id] = Active
 
 		if Active.ActiveWinId == Id then
 			AlterOptions(Active, Options)
@@ -377,6 +379,17 @@ function Tab.Validate()
 	end
 
 	assert(Message == nil, Message)
+end
+
+function Tab.Contains(WinId, X, Y)
+	local Instance = WindowToTab[WinId]
+	if Instance ~= nil then
+		local TabX, TabY, TabW, TabH = GetBounds(Instance)
+		TabH = Style.Font:getHeight()
+		return TabX <= X and X <= TabX + TabW and TabY <= Y and Y <= TabY + TabH
+	end
+
+	return false
 end
 
 return Tab
