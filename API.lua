@@ -1963,7 +1963,8 @@ end
 	Return: None.
 --]]
 function Slab.EndTab()
-	Tab.End(Window.IsObstructedAtMouse())
+	local WinId = Tab.GetActiveWinId()
+	Tab.End(Window.IsInstanceObstructedAtMouse(WinId))
 end
 
 return Slab

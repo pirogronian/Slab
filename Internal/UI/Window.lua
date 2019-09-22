@@ -377,6 +377,18 @@ function Window.IsObstructedAtMouse()
 	return Window.IsObstructed(X, Y)
 end
 
+function Window.IsInstanceObstructedAtMouse(Id)
+	local Result = false
+	local Instance = GetInstance(Id)
+	if Instance ~= nil then
+		local PrevInstance = ActiveInstance
+		ActiveInstance = Instance
+		Result = Window.IsObstructedAtMouse()
+		ActiveInstance = PrevInstance
+	end
+	return Result
+end
+
 function Window.Reset()
 	PendingStack = {}
 	ActiveInstance = GetInstance('Global')
@@ -603,7 +615,8 @@ function Window.End()
 	if ActiveInstance ~= nil then
 		local Options = {
 			Layer = ActiveInstance.Layer,
-			Channel = ActiveInstance.StackIndex
+			Channel = ActiveInstance.StackIndex,
+			Focused = ActiveInstance == Stack[1]
 		}
 
 		if not Tab.EndWindow(ActiveInstance.Id, Options) then

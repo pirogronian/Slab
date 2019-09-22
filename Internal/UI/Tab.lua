@@ -135,6 +135,7 @@ local function GetInstance(Id)
 		Instance.BgColor = Style.WindowBackgroundColor
 		Instance.ResetSize = false
 		Instance.ResetPosition = false
+		Instance.Focused = false
 		Instances[Id] = Instance
 	end
 
@@ -209,11 +210,13 @@ function Tab.EndWindow(Id, Options)
 	Options = Options == nil and {} or Options
 	Options.Layer = Options.Layer == nil and 'Normal' or Options.Layer
 	Options.Channel = Options.Channel == nil and nil or Options.Channel
+	Options.Focused = Options.Focused == nil and false or Options.Focused
 
 	if Active ~= nil then
 		if Active.ActiveWinId == Id then
 			Active.Layer = Options.Layer
 			Active.Channel = Options.Channel
+			Active.Focused = Options.Focused
 			return true
 		end
 
@@ -236,7 +239,18 @@ function Tab.End(IsObstructed)
 		Rounding = {Active.Rounding, Active.Rounding, 0, 0}
 	end
 
-	DrawCommands.Rectangle('fill', X, Y, W, H, Active.BgColor, Rounding)
+	local TitleColor = Style.WindowBackgroundColor
+	if Active.Focused then
+		TitleColor = Style.WindowTitleFocusedColor
+	end
+
+	local IsSingleWindow = #Active.Windows == 1
+
+	if IsSingleWindow then
+		DrawCommands.Rectangle('fill', X, Y, W, H, TitleColor, Rounding)
+	else
+		DrawCommands.Rectangle('fill', X, Y, W, H, Active.BgColor, Rounding)
+	end
 	DrawCommands.Rectangle('line', X, Y, W, H, nil, Rounding)
 
 	local MouseX, MouseY = Mouse.Position()
@@ -253,7 +267,7 @@ function Tab.End(IsObstructed)
 	})
 
 	local SelectorThisFrame = false
-	if #Active.Windows == 1 then
+	if IsSingleWindow then
 		local Title = Active.Windows[1]
 		local TitleW = Style.Font:getWidth(Title.Title)
 		DrawCommands.Print(Title.Title, math.floor(X + W * 0.5 - TitleW * 0.5), Y, Style.TextColor, Style.Font)
@@ -273,7 +287,7 @@ function Tab.End(IsObstructed)
 				and Region.Contains(MouseX, MouseY)
 
 			if Active.ActiveWinId == V.Id then
-				DrawCommands.Rectangle('fill', TextX, Y, BgSize, H, Style.WindowTitleFocusedColor)
+				DrawCommands.Rectangle('fill', TextX, Y, BgSize, H, TitleColor)
 			elseif IsHovered then
 				DrawCommands.Rectangle('fill', TextX, Y, BgSize, H, Style.ButtonHoveredColor)
 			end
@@ -385,11 +399,18 @@ function Tab.Contains(WinId, X, Y)
 	local Instance = WindowToTab[WinId]
 	if Instance ~= nil then
 		local TabX, TabY, TabW, TabH = GetBounds(Instance)
-		TabH = Style.Font:getHeight()
 		return TabX <= X and X <= TabX + TabW and TabY <= Y and Y <= TabY + TabH
 	end
 
 	return false
+end
+
+function Tab.GetActiveWinId()
+	if Active ~= nil then
+		return Active.ActiveWinId
+	end
+
+	return nil
 end
 
 return Tab
