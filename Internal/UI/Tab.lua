@@ -280,6 +280,12 @@ function Tab.End(IsObstructed)
 		for I, V in ipairs(Active.Windows) do
 			local TitleW = Style.Font:getWidth(V.Title)
 			local BgSize = TitleW + Pad
+
+			if TextX - X >= W then
+				TotalW = TotalW + BgSize
+				break
+			end
+
 			local IsHovered = TextX < MouseX and MouseX < TextX + BgSize 
 				and Y <= MouseY and MouseY <= Y + H 
 				and not IsObstructed 
@@ -299,8 +305,6 @@ function Tab.End(IsObstructed)
 			DrawCommands.Print(V.Title, math.floor(TextX + BgSize * 0.5 - TitleW * 0.5), Y, Style.TextColor, Style.Font)
 			TextX = TextX + BgSize
 			TotalW = TotalW + BgSize
-
-			-- TODO: Early out if title is not visible
 		end
 
 		if TotalW > W then
