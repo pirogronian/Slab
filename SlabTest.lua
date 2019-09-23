@@ -1949,6 +1949,35 @@ local function DrawFonts()
 	Slab.Text("This text control is using the default font.")
 end
 
+local DrawTab_NumWindows = 5
+
+local function DrawTab()
+	Slab.Textf(
+		"The Tab API allows multiple windows to be grouped into a single window with the title of each window displayed " ..
+		"in the title bar. The user can then select which window to display by selecting the window's title in the list. " ..
+		"If the number of titles exceed the width of the window, then an arrow will be rendered to allow the user to select " ..
+		"a non-visible window title from a dropdown list.")
+
+	Slab.NewLine()
+	Slab.Separator()
+
+	Slab.BeginLayout('DrawTab.Layout', {AlignX = 'center'})
+	Slab.Text("Tabs")
+	Slab.SameLine()
+	if Slab.Input('DrawTab.NumWindows', {Text = tostring(DrawTab_NumWindows), NumbersOnly = true, MinNumber = 1, ReturnOnText = false}) then
+		DrawTab_NumWindows = Slab.GetInputNumber()
+	end
+	Slab.EndLayout()
+
+	Slab.BeginTab('DrawTab.Tabs')
+	for I = 1, DrawTab_NumWindows, 1 do
+		Slab.BeginWindow('DrawTab.Tabs.Window.' .. I, {Title = "Tab " .. I, X = 900})
+		Slab.Text("Tabbed window " .. I)
+		Slab.EndWindow()
+	end
+	Slab.EndTab()
+end
+
 local DrawSlabTest = true
 
 function SlabTest.MainMenuBar()
@@ -1991,7 +2020,8 @@ local Categories = {
 	{"Tooltips", DrawTooltip},
 	{"Stats", DrawStats},
 	{"Layout", DrawLayout},
-	{"Fonts", DrawFonts}
+	{"Fonts", DrawFonts},
+	{"Tabs", DrawTab}
 }
 
 local Selected = nil

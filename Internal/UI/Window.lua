@@ -166,7 +166,9 @@ local function UpdateTitleBar(Instance)
 					PushToTop(Instance)
 				end
 			end
-		elseif Mouse.IsReleased(1) then
+		end
+		
+		if Instance.IsMoving and not Mouse.IsPressed(1) then
 			Instance.IsMoving = false
 		end
 

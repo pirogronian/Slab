@@ -146,6 +146,21 @@ function Tab.Begin(Id, Options)
 	Options = Options == nil and {} or Options
 
 	local Instance = GetInstance(Id)
+
+	if Instance.Windows ~= nil then
+		local Found = false
+		for I, V in ipairs(Instance.Windows) do
+			if V.Id == Instance.ActiveWinId then
+				Found = true
+				break
+			end
+		end
+
+		if not Found then
+			Instance.ActiveWinId = nil
+		end
+	end
+
 	Instance.Windows = {}
 
 	Active = Instance

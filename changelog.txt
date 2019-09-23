@@ -1,8 +1,8 @@
 v0.7.0 RELEASE
 ==========
 [Dock]: Initial implementation of docking.
-[Slab Test]: Create example for using the Tab API.
 [Tab]: Push focused window to front of title list if not visible.
+[GitHub Issue #1]
 
 BUGS
 ==========
