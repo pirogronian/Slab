@@ -34,6 +34,7 @@ local ColorPicker = require(SLAB_PATH .. '.Internal.UI.ColorPicker')
 local ComboBox = require(SLAB_PATH .. '.Internal.UI.ComboBox')
 local Cursor = require(SLAB_PATH .. '.Internal.Core.Cursor')
 local Dialog = require(SLAB_PATH .. '.Internal.UI.Dialog')
+local Dock = require(SLAB_PATH .. '.Internal.UI.Dock')
 local DrawCommands = require(SLAB_PATH .. '.Internal.Core.DrawCommands')
 local Image = require(SLAB_PATH .. '.Internal.UI.Image')
 local Input = require(SLAB_PATH .. '.Internal.UI.Input')
@@ -203,6 +204,7 @@ local Version_Revision = 0
 
 local FrameNumber = 0
 local FrameStatHandle = nil
+local PendingDockWindow = nil
 
 local function TextInput(Ch)
 	Input.Text(Ch)
@@ -308,6 +310,15 @@ function Slab.Draw()
 
 	Window.Validate()
 	Tab.Validate()
+
+	local MovingInstance = Window.GetMovingInstance()
+	if MovingInstance ~= nil then
+		Dock.DrawOverlay()
+		PendingDockWindow = MovingInstance
+	else
+		Dock.Commit(PendingDockWindow)
+		PendingDockWindow = nil
+	end
 
 	if MenuState.RequestClose then
 		Menu.Close()

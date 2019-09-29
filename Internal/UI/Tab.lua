@@ -24,6 +24,7 @@ SOFTWARE.
 
 --]]
 
+local Dock = require(SLAB_PATH .. '.Internal.UI.Dock')
 local DrawCommands = require(SLAB_PATH .. '.Internal.Core.DrawCommands')
 local Mouse = require(SLAB_PATH .. '.Internal.Input.Mouse')
 local Region = require(SLAB_PATH .. '.Internal.UI.Region')
@@ -114,12 +115,78 @@ local function AlterOptions(Instance, Options)
 	end
 end
 
+local function BeginWindow(Instance, WinId, Options)
+	Options = Options == nil and {} or Options
+
+	if Instance ~= nil then
+		if Instance.ActiveWinId == nil then
+			Instance.ActiveWinId = WinId
+			Instance.X = Options.X
+			Instance.Y = Options.Y
+			Instance.W = Options.W
+			Instance.H = Options.H
+			Instance.Border = Options.Border
+			Instance.Rounding = Options.Rounding
+		end
+
+		local Title = Options.Title
+		if Title == nil or Title == "" then
+			Title = "Tab " .. #Instance.Windows + 1
+		end
+
+		table.insert(Instance.Windows, {Id = WinId, Title = Title})
+		WindowToTab[WinId] = Instance
+
+		if Instance.ActiveWinId == WinId then
+			AlterOptions(Instance, Options)
+			return true
+		end
+	end
+
+	return false
+end
+
+local function ApplyWindowDelta(Instance, X, Y, W, H)
+	if Instance ~= nil then
+		Instance.DeltaX = X
+		Instance.DeltaY = Y
+		Instance.DeltaW = W
+		Instance.DeltaH = H
+	end
+end
+
+local function IsWindowActive(Instance, WinId)
+	if Instance ~= nil then
+		return Instance.ActiveWinId == WinId
+	end
+
+	return false
+end
+
+local function EndWindow(Instance, WinId, Options)
+	Options = Options == nil and {} or Options
+	Options.Layer = Options.Layer == nil and 'Normal' or Options.Layer
+	Options.Channel = Options.Channel == nil and nil or Options.Channel
+	Options.Focused = Options.Focused == nil and false or Options.Focused
+
+	if Instance ~= nil then
+		if Instance.ActiveWinId == WinId then
+			Instance.Layer = Options.Layer
+			Instance.Channel = Options.Channel
+			Instance.Focused = Options.Focused
+			return true
+		end
+	end
+
+	return false
+end
+
 local function GetInstance(Id)
 	if Instances[Id] == nil then
 		local Instance = {}
 		Instance.Id = Id
 		Instance.ActiveWinId = nil
-		Instance.Windows = nil
+		Instance.Windows = {}
 		Instance.X = 0
 		Instance.Y = 0
 		Instance.W = 0
@@ -136,6 +203,7 @@ local function GetInstance(Id)
 		Instance.ResetSize = false
 		Instance.ResetPosition = false
 		Instance.Focused = false
+		Instance.Override = false
 		Instances[Id] = Instance
 	end
 
@@ -144,69 +212,43 @@ end
 
 function Tab.Begin(Id, Options)
 	Options = Options == nil and {} or Options
+	Options.X = Options.X == nil and nil or Options.X
+	Options.Y = Options.Y == nil and nil or Options.Y
+	Options.W = Options.W == nil and nil or Options.W
+	Options.H = Options.H == nil and nil or Options.H
 
 	local Instance = GetInstance(Id)
-
-	if Instance.Windows ~= nil then
-		local Found = false
-		for I, V in ipairs(Instance.Windows) do
-			if V.Id == Instance.ActiveWinId then
-				Found = true
-				break
-			end
-		end
-
-		if not Found then
-			Instance.ActiveWinId = nil
-		end
-	end
-
-	Instance.Windows = {}
+	Instance.X = Options.X == nil and Instance.X or Options.X
+	Instance.Y = Options.Y == nil and Instance.Y or Options.Y
+	Instance.W = Options.W == nil and Instance.W or Options.W
+	Instance.H = Options.H == nil and Instance.H or Options.H
 
 	Active = Instance
 	table.insert(Stack, 1, Active)
 end
 
 function Tab.BeginWindow(Id, Options)
-	Options = Options == nil and {} or Options
+	local DockType = Dock.GetDock(Id)
+	if DockType ~= nil then
+		local X, Y, W, H = Dock.GetBounds(DockType)
+		Tab.Begin('Dock.' .. DockType, {X = X, Y = Y, W = W, H = H})
+
+		if Active.ActiveWinId == nil then
+			SetActiveWindow(Active, Id)
+		end
+
+		Dock.AlterOptions(Id, Options)
+	end
 
 	if Active ~= nil then
-		if Active.ActiveWinId == nil then
-			Active.ActiveWinId = Id
-			Active.X = Options.X
-			Active.Y = Options.Y
-			Active.W = Options.W
-			Active.H = Options.H
-			Active.Border = Options.Border
-			Active.Rounding = Options.Rounding
-		end
-
-		local Title = Options.Title
-		if Title == nil or Title == "" then
-			Title = "Tab " .. #Active.Windows + 1
-		end
-
-		table.insert(Active.Windows, {Id = Id, Title = Title})
-		WindowToTab[Id] = Active
-
-		if Active.ActiveWinId == Id then
-			AlterOptions(Active, Options)
-			return true
-		end
-
-		return false
+		return BeginWindow(Active, Id, Options)
 	end
 
 	return true
 end
 
 function Tab.ApplyWindowDelta(X, Y, W, H)
-	if Active ~= nil then
-		Active.DeltaX = X
-		Active.DeltaY = Y
-		Active.DeltaW = W
-		Active.DeltaH = H
-	end
+	ApplyWindowDelta(Active, X, Y, W, H)
 end
 
 function Tab.IsActive()
@@ -214,31 +256,23 @@ function Tab.IsActive()
 end
 
 function Tab.IsWindowActive(Id)
-	if Active ~= nil then
-		return Active.ActiveWinId == Id
-	end
-
-	return false
+	return IsWindowActive(Active, Id)
 end
 
 function Tab.EndWindow(Id, Options)
-	Options = Options == nil and {} or Options
-	Options.Layer = Options.Layer == nil and 'Normal' or Options.Layer
-	Options.Channel = Options.Channel == nil and nil or Options.Channel
-	Options.Focused = Options.Focused == nil and false or Options.Focused
+	local Result = true
 
 	if Active ~= nil then
-		if Active.ActiveWinId == Id then
-			Active.Layer = Options.Layer
-			Active.Channel = Options.Channel
-			Active.Focused = Options.Focused
-			return true
-		end
+		Result = EndWindow(Active, Id, Options)
 
-		return false
+		local DockType = Dock.GetDock(Id)
+		if DockType ~= nil then
+			table.remove(Stack, 1)
+			Active = Stack[1]
+		end
 	end
 
-	return true
+	return Result
 end
 
 function Tab.End(IsObstructed)
@@ -412,6 +446,32 @@ function Tab.Validate()
 	end
 
 	assert(Message == nil, Message)
+
+	for Id, Instance in pairs(Instances) do
+		if Instance.Id == 'Dock.Left'
+			or Instance.Id == 'Dock.Right'
+			or Instance.Id == 'Dock.Bottom' then
+			Active = Instance
+			table.insert(Stack, 1, Active)
+			Tab.End(false)
+		end
+
+		if Instance.Windows ~= nil then
+			local Found = false
+			for I, V in ipairs(Instance.Windows) do
+				if V.Id == Instance.ActiveWinId then
+					Found = true
+					break
+				end
+			end
+
+			if not Found then
+				Instance.ActiveWinId = nil
+			end
+		end
+
+		Instance.Windows = {}
+	end
 end
 
 function Tab.Contains(WinId, X, Y)
@@ -430,6 +490,14 @@ function Tab.GetActiveWinId()
 	end
 
 	return nil
+end
+
+function Tab.HasWindow(WinId)
+	if Active ~= nil then
+		return Active == WindowToTab[WinId]
+	end
+	
+	return false
 end
 
 return Tab

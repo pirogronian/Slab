@@ -1,7 +1,12 @@
 v0.7.0 RELEASE
 ==========
-[Dock]: Initial implementation of docking.
+[Dock]: Untether window from dock.
+[Dock]: Proper obstruction check. If window is docked, should not be obstructed.
+[Dock]: Support allowing tab windows. All windows of the tab should be docked. The tab options should be altered by Dock.
+[Dock]: Options to enable/disable certain docks.
 [Tab]: Push focused window to front of title list if not visible.
+[Tab]: Fix issue with cursor changing to resize cursor when moving window.
+[Tab]: Fix issue with sub-windows being added to tabbed window.
 [GitHub Issue #1]
 
 BUGS
@@ -25,6 +30,7 @@ TODO
 [Column]: Investigate moving Column rendering to its own draw channel within an active batch to reduce scissor calls.
 [Column]: Move separator with mouse.
 Combo Box: Easy API with table of possible values.
+[Contexts]: Module variables moved to a context to allow multiple Slab instances.
 Context Menu: Investigate checking hot item and last item of window.
 Controls: Convert all window bounds check to use region.
 [Date Time]: Initial implementation for a date/time control.

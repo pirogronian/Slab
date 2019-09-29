@@ -41,6 +41,7 @@ local Stack = {}
 local StackLockId = nil
 local PendingStack = {}
 local ActiveInstance = nil
+local MovingInstance = nil
 local CurrentFrameNumber = 0
 
 local SizerType =
@@ -159,9 +160,19 @@ local function UpdateTitleBar(Instance)
 
 		local MouseX, MouseY = Mouse.Position()
 
+		if MovingInstance ~= nil and MovingInstance ~= Instance then
+			if Tab.IsActive() then
+				if Tab.HasWindow(MovingInstance.Id) then
+					MovingInstance = Instance
+					MovingInstance.IsMoving = true
+				end
+			end
+		end
+
 		if Mouse.IsClicked(1) and not Window.IsObstructed(MouseX, MouseY) then
 			if X <= MouseX and MouseX <= X + W and Y <= MouseY and MouseY <= Y + H then
 				Instance.IsMoving = true
+				MovingInstance = Instance
 				if Instance.AllowFocus then
 					PushToTop(Instance)
 				end
@@ -170,6 +181,7 @@ local function UpdateTitleBar(Instance)
 		
 		if Instance.IsMoving and not Mouse.IsPressed(1) then
 			Instance.IsMoving = false
+			MovingInstance = nil
 		end
 
 		if Instance.IsMoving then
@@ -935,6 +947,8 @@ function Window.GetInstanceInfo(Id)
 		end
 	end
 
+	table.insert(Result, "Moving: " .. (MovingInstance ~= nil and MovingInstance.Id or "nil"))
+
 	if Instance ~= nil then
 		table.insert(Result, "Title: " .. Instance.Title)
 		table.insert(Result, "X: " .. Instance.X)
@@ -979,6 +993,10 @@ function Window.IsAutoSize()
 	end
 
 	return false
+end
+
+function Window.GetMovingInstance()
+	return MovingInstance
 end
 
 return Window
