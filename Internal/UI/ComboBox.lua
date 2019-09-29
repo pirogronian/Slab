@@ -186,7 +186,6 @@ function ComboBox.End()
 	end
 
 	Window.End()
-	DrawCommands.SetLayer('Normal')
 	LayoutManager.End()
 
 	if Y ~= 0.0 and H ~= 0.0 then

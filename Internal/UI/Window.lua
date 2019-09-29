@@ -415,7 +415,7 @@ end
 function Window.IsActive()
 	if ActiveInstance ~= nil and ActiveInstance.Id ~= 'Global' then
 		if Tab.IsActive() then
-			return Tab.IsWindowActive(ActiveInstance.Id)
+			return Tab.HasBegun()
 		end
 
 		return true
@@ -561,6 +561,7 @@ function Window.Begin(Id, Options)
 	Cursor.SetAnchor(ActiveInstance.X + ActiveInstance.Border, ActiveInstance.Y + ActiveInstance.Border)
 
 	Tab.ApplyWindowDelta(
+		ActiveInstance.Id,
 		ActiveInstance.TitleDeltaX,
 		ActiveInstance.TitleDeltaY,
 		ActiveInstance.SizeDeltaX,

@@ -119,6 +119,10 @@ local function BeginWindow(Instance, WinId, Options)
 	Options = Options == nil and {} or Options
 
 	if Instance ~= nil then
+		if Instance.HasBegun then
+			return true
+		end
+
 		if Instance.ActiveWinId == nil then
 			Instance.ActiveWinId = WinId
 			Instance.X = Options.X
@@ -138,6 +142,7 @@ local function BeginWindow(Instance, WinId, Options)
 		WindowToTab[WinId] = Instance
 
 		if Instance.ActiveWinId == WinId then
+			Instance.HasBegun = true
 			AlterOptions(Instance, Options)
 			return true
 		end
@@ -146,8 +151,8 @@ local function BeginWindow(Instance, WinId, Options)
 	return false
 end
 
-local function ApplyWindowDelta(Instance, X, Y, W, H)
-	if Instance ~= nil then
+local function ApplyWindowDelta(Instance, WinId, X, Y, W, H)
+	if Instance ~= nil and Instance.ActiveWinId == WinId then
 		Instance.DeltaX = X
 		Instance.DeltaY = Y
 		Instance.DeltaW = W
@@ -174,6 +179,9 @@ local function EndWindow(Instance, WinId, Options)
 			Instance.Layer = Options.Layer
 			Instance.Channel = Options.Channel
 			Instance.Focused = Options.Focused
+			Instance.HasBegun = false
+			return true
+		elseif Instance.HasBegun then
 			return true
 		end
 	end
@@ -203,7 +211,7 @@ local function GetInstance(Id)
 		Instance.ResetSize = false
 		Instance.ResetPosition = false
 		Instance.Focused = false
-		Instance.Override = false
+		Instance.HasBegun = false
 		Instances[Id] = Instance
 	end
 
@@ -247,8 +255,8 @@ function Tab.BeginWindow(Id, Options)
 	return true
 end
 
-function Tab.ApplyWindowDelta(X, Y, W, H)
-	ApplyWindowDelta(Active, X, Y, W, H)
+function Tab.ApplyWindowDelta(WinId, X, Y, W, H)
+	ApplyWindowDelta(Active, WinId, X, Y, W, H)
 end
 
 function Tab.IsActive()
@@ -497,6 +505,14 @@ function Tab.HasWindow(WinId)
 		return Active == WindowToTab[WinId]
 	end
 	
+	return false
+end
+
+function Tab.HasBegun()
+	if Active ~= nil then
+		return Active.HasBegun
+	end
+
 	return false
 end
 

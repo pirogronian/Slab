@@ -6,7 +6,6 @@ v0.7.0 RELEASE
 [Dock]: Options to enable/disable certain docks.
 [Tab]: Push focused window to front of title list if not visible.
 [Tab]: Fix issue with cursor changing to resize cursor when moving window.
-[Tab]: Fix issue with sub-windows being added to tabbed window.
 [GitHub Issue #1]
 
 BUGS
