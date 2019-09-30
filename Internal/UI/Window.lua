@@ -217,6 +217,10 @@ local function UpdateSize(Instance, IsObstructed)
 			return
 		end
 
+		if MovingInstance ~= nil then
+			return
+		end
+
 		local X = Instance.X
 		local Y = Instance.Y
 		local W = Instance.W

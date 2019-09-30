@@ -5,7 +5,6 @@ v0.7.0 RELEASE
 [Dock]: Support allowing tab windows. All windows of the tab should be docked. The tab options should be altered by Dock.
 [Dock]: Options to enable/disable certain docks.
 [Tab]: Push focused window to front of title list if not visible.
-[Tab]: Fix issue with cursor changing to resize cursor when moving window.
 [GitHub Issue #1]
 
 BUGS
