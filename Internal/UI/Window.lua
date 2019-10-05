@@ -25,6 +25,7 @@ SOFTWARE.
 --]]
 
 local Cursor = require(SLAB_PATH .. ".Internal.Core.Cursor")
+local Dock = require(SLAB_PATH .. ".Internal.UI.Dock")
 local DrawCommands = require(SLAB_PATH .. ".Internal.Core.DrawCommands")
 local MenuState = require(SLAB_PATH .. ".Internal.UI.MenuState")
 local Mouse = require(SLAB_PATH .. ".Internal.Input.Mouse")
@@ -42,6 +43,7 @@ local StackLockId = nil
 local PendingStack = {}
 local ActiveInstance = nil
 local MovingInstance = nil
+local HotInstance = nil
 local CurrentFrameNumber = 0
 
 local SizerType =
@@ -364,26 +366,12 @@ function Window.IsObstructed(X, Y, SkipScrollCheck)
 	end
 
 	if ActiveInstance ~= nil then
-		local FoundStackLock = false
+		if ActiveInstance ~= HotInstance then
+			return true
+		end
 
-		for I, V in ipairs(Stack) do
-			if V.Id == StackLockId then
-				FoundStackLock = true
-			elseif FoundStackLock then
-				return true
-			end
-
-			if Contains(V, X, Y) and V.CanObstruct then
-				if ActiveInstance == V then
-					if not SkipScrollCheck and Region.IsHoverScrollBar(ActiveInstance.Id) then
-						return true
-					end
-
-					return false
-				else
-					return true
-				end
-			end
+		if not SkipScrollCheck and Region.IsHoverScrollBar(ActiveInstance.Id) then
+			return true
 		end
 	end
 
@@ -884,6 +872,8 @@ function Window.Validate()
 	if ShouldUpdate then
 		UpdateStackIndex()
 	end
+
+	Window.UpdateHotInstance()
 end
 
 function Window.HasResized()
@@ -953,6 +943,7 @@ function Window.GetInstanceInfo(Id)
 	end
 
 	table.insert(Result, "Moving: " .. (MovingInstance ~= nil and MovingInstance.Id or "nil"))
+	table.insert(Result, "Hot: " .. (HotInstance ~= nil and HotInstance.Id or "nil"))
 
 	if Instance ~= nil then
 		table.insert(Result, "Title: " .. Instance.Title)
@@ -1002,6 +993,35 @@ end
 
 function Window.GetMovingInstance()
 	return MovingInstance
+end
+
+function Window.UpdateHotInstance()
+	HotInstance = nil
+
+	if StackLockId ~= nil then
+		HotInstance = GetInstance(StackLockId)
+		return
+	end
+
+	local X, Y = Mouse.Position()
+	for I, V in ipairs(Stack) do
+		if V.CanObstruct and Contains(V, X, Y) then
+			HotInstance = V
+			break
+		end
+	end
+
+	if HotInstance ~= nil then
+		if HotInstance.Layer == 'Normal' then
+			local DockedWindows = Dock.GetWindows()
+			for I, DockWindow in ipairs(DockedWindows) do
+				if Contains(DockWindow, X, Y) then
+					HotInstance = DockWindow
+					break
+				end
+			end
+		end
+	end
 end
 
 return Window

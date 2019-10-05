@@ -168,4 +168,16 @@ function Dock.AlterOptions(WinId, Options)
 	end
 end
 
+function Dock.GetWindows()
+	local Result = {}
+
+	for Id, Instance in pairs(Instances) do
+		for WinId, Window in pairs(Instance.Windows) do
+			table.insert(Result, Window)
+		end
+	end
+
+	return Result
+end
+
 return Dock
