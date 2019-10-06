@@ -236,17 +236,8 @@ end
 
 function Tab.Begin(Id, Options)
 	Options = Options == nil and {} or Options
-	Options.X = Options.X == nil and nil or Options.X
-	Options.Y = Options.Y == nil and nil or Options.Y
-	Options.W = Options.W == nil and nil or Options.W
-	Options.H = Options.H == nil and nil or Options.H
 
 	local Instance = GetInstance(Id)
-	Instance.X = Options.X == nil and Instance.X or Options.X
-	Instance.Y = Options.Y == nil and Instance.Y or Options.Y
-	Instance.W = Options.W == nil and Instance.W or Options.W
-	Instance.H = Options.H == nil and Instance.H or Options.H
-
 	Active = Instance
 	table.insert(Stack, 1, Active)
 end
@@ -254,11 +245,15 @@ end
 function Tab.BeginWindow(Id, Options)
 	local DockType = Dock.GetDock(Id)
 	if DockType ~= nil then
-		local X, Y, W, H = Dock.GetBounds(DockType)
-		Tab.Begin('Dock.' .. DockType, {X = X, Y = Y, W = W, H = H})
+		Tab.Begin('Dock.' .. DockType)
 
 		if Active.ActiveWinId == nil then
 			SetActiveWindow(Active, Id)
+			local X, Y, W, H = Dock.GetBounds(DockType)
+			Active.X = X
+			Active.Y = Y
+			Active.W = W
+			Active.H = H
 		end
 
 		Dock.AlterOptions(Id, Options)

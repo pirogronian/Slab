@@ -103,6 +103,10 @@ function Text.Begin(Label, Options)
 end
 
 function Text.BeginFormatted(Label, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('Textf', 'Slab')
 
 	local WinW, WinH = Window.GetBorderlessSize()
@@ -131,6 +135,10 @@ function Text.BeginFormatted(Label, Options)
 end
 
 function Text.BeginObject(Object, Options)
+	if not Window.IsActive() then
+		return
+	end
+
 	local StatHandle = Stats.Begin('TextObject', 'Slab')
 
 	local WinW, WinH = Window.GetBorderlessSize()

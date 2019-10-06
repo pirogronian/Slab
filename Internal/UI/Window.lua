@@ -461,6 +461,8 @@ function Window.Begin(Id, Options)
 	local RequestedX, RequestedY = Options.X, Options.Y
 
 	if not Tab.BeginWindow(Id, Options) then
+		ActiveInstance = GetInstance(Id)
+		table.insert(PendingStack, 1, Instance)
 		return
 	end
 
@@ -642,6 +644,8 @@ function Window.End()
 		}
 
 		if not Tab.EndWindow(ActiveInstance.Id, Options) then
+			table.remove(PendingStack, 1)
+			ActiveInstance = PendingStack[1]
 			return
 		end
 

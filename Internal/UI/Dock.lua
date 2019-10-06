@@ -107,7 +107,7 @@ end
 
 function Dock.DrawOverlay()
 	DrawCommands.SetLayer('Dock')
-	DrawCommands.Begin()
+	DrawCommands.Begin({Channel = math.huge})
 
 	DrawOverlay('Left')
 	DrawOverlay('Right')
@@ -117,6 +117,10 @@ function Dock.DrawOverlay()
 end
 
 function Dock.Commit(Window)
+	if Window == nil then
+		return
+	end
+
 	if Mouse.IsReleased(1) then
 		local Instance = nil
 		if Flags['Left'] and IsMouseHovered('Left') then
