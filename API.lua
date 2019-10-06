@@ -1978,4 +1978,18 @@ function Slab.EndTab()
 	Tab.End(Window.IsInstanceObstructedAtMouse(WinId))
 end
 
+--[[
+	SetDockEnabled
+
+	Alter what docks the user may dock windows to.
+
+	Options: [Table] Key-value pairs for which docks are enabled or disabled. The key should be a string and the value
+		should be true or false. The available keys are 'Left', 'Right', and 'Bottom'.
+
+	Return: None.
+--]]
+function Slab.SetDockEnabled(Options)
+	Dock.SetEnabled(Options)
+end
+
 return Slab

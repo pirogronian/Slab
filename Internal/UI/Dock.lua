@@ -32,6 +32,11 @@ local Style = require(SLAB_PATH .. '.Style')
 local Dock = {}
 
 local Instances = {}
+local Flags = {
+	['Left'] = false,
+	['Right'] = false,
+	['Bottom'] = false
+}
 
 local function GetOverlayBounds(Type)
 	local X, Y, W, H = 0, 0, 0, 0
@@ -65,6 +70,10 @@ local function IsMouseHovered(Type)
 end
 
 local function DrawOverlay(Type)
+	if not Flags[Type] then
+		return
+	end
+
 	local X, Y, W, H = GetOverlayBounds(Type)
 	local Color = {0.29, 0.59, 0.83, 0.65}
 	local TitleH = 14
@@ -110,11 +119,11 @@ end
 function Dock.Commit(Window)
 	if Mouse.IsReleased(1) then
 		local Instance = nil
-		if IsMouseHovered('Left') then
+		if Flags['Left'] and IsMouseHovered('Left') then
 			Instance = GetInstance('Left')
-		elseif IsMouseHovered('Right') then
+		elseif Flags['Right'] and IsMouseHovered('Right') then
 			Instance = GetInstance('Right')
-		elseif IsMouseHovered('Bottom') then
+		elseif Flags['Bottom'] and IsMouseHovered('Bottom') then
 			Instance = GetInstance('Bottom')
 		end
 
@@ -235,6 +244,17 @@ function Dock.ResetTether()
 		Instance.UntetheredWindows = {}
 		Instance.TetherX = 0
 		Instance.TetherY = 0
+	end
+end
+
+function Dock.SetEnabled(Options)
+	Options = Options == nil and {} or Options
+
+	for K, V in pairs(Options) do
+		if Flags[K] ~= nil then
+			assert(type(V) == "boolean", "Value for '" .. K .. "' is not of type 'Boolean'.")
+			Flags[K] = V
+		end
 	end
 end
 

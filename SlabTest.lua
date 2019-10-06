@@ -1978,6 +1978,29 @@ local function DrawTab()
 	Slab.EndTab()
 end
 
+local DrawDock_Enabled = {
+	['Left'] = false,
+	['Right'] = false,
+	['Bottom'] = false
+}
+
+local function DrawDock()
+	Slab.Textf(
+		"Slab offers the ability to dock a moving window to a side of a window. This allows for organizing windows and locking " ..
+		"their position and also allows for resizing the window. Multiple windows can be docked as well. The dockable sides are " ..
+		"to the left, right, and bottom. Each side is disabled by default, but can be enabled through the SetDockEnabled function.")
+
+	Slab.NewLine()
+	Slab.Separator()
+
+	for K, V in pairs(DrawDock_Enabled) do
+		if Slab.CheckBox(V, K) then
+			DrawDock_Enabled[K] = not V
+			Slab.SetDockEnabled({[K] = not V})
+		end
+	end
+end
+
 local DrawSlabTest = true
 
 function SlabTest.MainMenuBar()
@@ -2021,7 +2044,8 @@ local Categories = {
 	{"Stats", DrawStats},
 	{"Layout", DrawLayout},
 	{"Fonts", DrawFonts},
-	{"Tabs", DrawTab}
+	{"Tabs", DrawTab},
+	{"Dock", DrawDock}
 }
 
 local Selected = nil
