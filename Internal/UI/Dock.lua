@@ -32,7 +32,6 @@ local Style = require(SLAB_PATH .. '.Style')
 local Dock = {}
 
 local Instances = {}
-local Pending = nil
 
 local function GetOverlayBounds(Type)
 	local X, Y, W, H = 0, 0, 0, 0
@@ -59,16 +58,20 @@ local function GetOverlayBounds(Type)
 	return X, Y, W, H
 end
 
+local function IsMouseHovered(Type)
+	local X, Y, W, H = GetOverlayBounds(Type)
+	local MouseX, MouseY = Mouse.Position()
+	return X <= MouseX and MouseX <= X + W and Y <= MouseY and MouseY <= Y + H
+end
+
 local function DrawOverlay(Type)
 	local X, Y, W, H = GetOverlayBounds(Type)
 	local Color = {0.29, 0.59, 0.83, 0.65}
 	local TitleH = 14
 	local Spacing = 6
 
-	local MouseX, MouseY = Mouse.Position()
-	if X <= MouseX and MouseX <= X + W and Y <= MouseY and MouseY <= Y + H then
+	if IsMouseHovered(Type) then
 		Color = {0.50, 0.75, 0.96, 0.65}
-		Pending = Type
 	end
 
 	DrawCommands.Rectangle('fill', X, Y, W, TitleH, Color)
@@ -85,6 +88,9 @@ local function GetInstance(Id)
 		local Instance = {}
 		Instance.Id = Id
 		Instance.Windows = {}
+		Instance.UntetheredWindows = {}
+		Instance.TetherX = 0
+		Instance.TetherY = 0
 		Instances[Id] = Instance
 	end
 	return Instances[Id]
@@ -102,25 +108,38 @@ function Dock.DrawOverlay()
 end
 
 function Dock.Commit(Window)
-	if Pending ~= nil and Mouse.IsReleased(1) then
-		local Instance = GetInstance(Pending)
-
-		if Window ~= nil then
-			Instance.Windows[Window.Id] = Window
+	if Mouse.IsReleased(1) then
+		local Instance = nil
+		if IsMouseHovered('Left') then
+			Instance = GetInstance('Left')
+		elseif IsMouseHovered('Right') then
+			Instance = GetInstance('Right')
+		elseif IsMouseHovered('Bottom') then
+			Instance = GetInstance('Bottom')
 		end
 
-		Pending = nil
+		if Instance ~= nil then
+			Instance.Windows[Window.Id] = Window
+		end
 	end
 end
 
 function Dock.GetDock(WinId)
-	for K, V in pairs(Instances) do
-		if V.Windows[WinId] ~= nil then
-			return K
+	local Result = nil
+
+	for Id, Instance in pairs(Instances) do
+		if Instance.Windows[WinId] ~= nil then
+			Result = Id
+			for I, V in ipairs(Instance.UntetheredWindows) do
+				if WinId == V then
+					Instance.Windows[WinId] = nil
+				end
+			end
+			break
 		end
 	end
 
-	return nil
+	return Result
 end
 
 function Dock.GetBounds(Type)
@@ -168,16 +187,55 @@ function Dock.AlterOptions(WinId, Options)
 	end
 end
 
-function Dock.GetWindows()
+function Dock.GetWindows(Id)
 	local Result = {}
 
-	for Id, Instance in pairs(Instances) do
-		for WinId, Window in pairs(Instance.Windows) do
-			table.insert(Result, Window)
+	for DockId, Instance in pairs(Instances) do
+		if Id == nil or Id == DockId then
+			for WinId, Window in pairs(Instance.Windows) do
+				table.insert(Result, Window)
+			end
 		end
 	end
 
 	return Result
+end
+
+function Dock.ApplyTether(WinId, X, Y)
+	for Id, Instance in pairs(Instances) do
+		if Instance.Windows[WinId] ~= nil then
+			Instance.TetherX = Instance.TetherX + X
+			Instance.TetherY = Instance.TetherY + Y
+
+			local Length = (Instance.TetherX * Instance.TetherX) + (Instance.TetherY * Instance.TetherY)
+			if Length >= math.pow(30, 2) then
+				table.insert(Instance.UntetheredWindows, WinId)
+				Instance.TetherX = 0
+				Instance.TetherY = 0
+			end
+		end
+	end
+end
+
+function Dock.IsUntethered(WinId)
+	for Id, Instance in pairs(Instances) do
+		if Instance.Windows[WinId] ~= nil then
+			for I, V in ipairs(Instance.UntetheredWindows) do
+				if V == WinId then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+function Dock.ResetTether()
+	for Id, Instance in pairs(Instances) do
+		Instance.UntetheredWindows = {}
+		Instance.TetherX = 0
+		Instance.TetherY = 0
+	end
 end
 
 return Dock

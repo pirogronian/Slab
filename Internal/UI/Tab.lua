@@ -189,6 +189,22 @@ local function EndWindow(Instance, WinId, Options)
 	return false
 end
 
+local function TabIdToDock(Id)
+	local Result = nil
+
+	if Id ~= nil then
+		if Id == 'Dock.Left' then
+			Result = 'Left'
+		elseif Id == 'Dock.Right' then
+			Result = 'Right'
+		elseif Id == 'Dock.Bottom' then
+			Result = 'Bottom'
+		end
+	end
+
+	return Result
+end
+
 local function GetInstance(Id)
 	if Instances[Id] == nil then
 		local Instance = {}
@@ -447,7 +463,7 @@ function Tab.Validate()
 
 	for I, V in ipairs(Stack) do
 		if Message == nil then
-			Message = "The following layouts have not had EndLayout called:\n"
+			Message = "The following tabs have not had EndTab called:\n"
 		end
 
 		Message = Message .. "'" .. V.Id .. "'\n"
@@ -459,9 +475,12 @@ function Tab.Validate()
 		if Instance.Id == 'Dock.Left'
 			or Instance.Id == 'Dock.Right'
 			or Instance.Id == 'Dock.Bottom' then
-			Active = Instance
-			table.insert(Stack, 1, Active)
-			Tab.End(false)
+			local Windows = Dock.GetWindows(TabIdToDock(Instance.Id))
+			if #Windows > 0 then
+				Active = Instance
+				table.insert(Stack, 1, Active)
+				Tab.End(false)
+			end
 		end
 
 		if Instance.Windows ~= nil then

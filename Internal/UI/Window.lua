@@ -43,6 +43,8 @@ local StackLockId = nil
 local PendingStack = {}
 local ActiveInstance = nil
 local MovingInstance = nil
+local MovingInstance_TitleOffsetX = 0
+local MovingInstance_TitleOffsetY = 0
 local HotInstance = nil
 local CurrentFrameNumber = 0
 
@@ -149,8 +151,8 @@ local function Contains(Instance, X, Y)
 	return false
 end
 
-local function UpdateTitleBar(Instance)
-	if Instance ~= nil and Instance.SizerType == SizerType.None and Instance.AllowMove then
+local function UpdateTitleBar(Instance, OriginalX, OriginalY)
+	if Instance ~= nil and Instance.SizerType == SizerType.None then
 		if Instance.Title == "" and not Tab.IsWindowActive(Instance.Id) then
 			return
 		end
@@ -175,6 +177,8 @@ local function UpdateTitleBar(Instance)
 			if X <= MouseX and MouseX <= X + W and Y <= MouseY and MouseY <= Y + H then
 				Instance.IsMoving = true
 				MovingInstance = Instance
+				MovingInstance_TitleOffsetX = MouseX - X
+				MovingInstance_TitleOffsetY = MouseY - Y
 				if Instance.AllowFocus then
 					PushToTop(Instance)
 				end
@@ -184,12 +188,21 @@ local function UpdateTitleBar(Instance)
 		if Instance.IsMoving and not Mouse.IsPressed(1) then
 			Instance.IsMoving = false
 			MovingInstance = nil
+			Dock.ResetTether()
 		end
 
 		if Instance.IsMoving then
 			local DeltaX, DeltaY = Mouse.GetDelta()
-			Instance.TitleDeltaX = Instance.TitleDeltaX + DeltaX
-			Instance.TitleDeltaY = Instance.TitleDeltaY + DeltaY
+			if Instance.AllowMove then
+				Instance.TitleDeltaX = Instance.TitleDeltaX + DeltaX
+				Instance.TitleDeltaY = Instance.TitleDeltaY + DeltaY
+			else
+				Dock.ApplyTether(Instance.Id, DeltaX, DeltaY)
+				if Dock.IsUntethered(Instance.Id) then
+					Instance.TitleDeltaX = MouseX - OriginalX - MovingInstance_TitleOffsetX
+					Instance.TitleDeltaY = MouseY - OriginalY - MovingInstance_TitleOffsetY
+				end
+			end
 		end
 	end
 end
@@ -445,6 +458,8 @@ function Window.Begin(Id, Options)
 	Options.CanObstruct = Options.CanObstruct == nil and true or Options.CanObstruct
 	Options.Rounding = Options.Rounding == nil and Style.WindowRounding or Options.Rounding
 
+	local RequestedX, RequestedY = Options.X, Options.Y
+
 	if not Tab.BeginWindow(Id, Options) then
 		return
 	end
@@ -561,7 +576,7 @@ function Window.Begin(Id, Options)
 	)
 
 	UpdateSize(ActiveInstance, IsObstructed)
-	UpdateTitleBar(ActiveInstance)
+	UpdateTitleBar(ActiveInstance, RequestedX, RequestedY)
 
 	DrawCommands.SetLayer(ActiveInstance.Layer)
 
