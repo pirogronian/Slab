@@ -530,4 +530,47 @@ function Tab.HasBegun()
 	return false
 end
 
+function Tab.GetIds()
+	local Result = {}
+
+	for K, V in pairs(Instances) do
+		table.insert(Result, K)
+	end
+
+	return Result
+end
+
+function Tab.GetDebugInfo(Id)
+	local Result = {}
+
+	local Instance = nil
+	for K, V in pairs(Instances) do
+		if Id == K then
+			Instance = V
+			break
+		end
+	end
+
+	if Instance ~= nil then
+		table.insert(Result, "Id: " .. Instance.Id)
+		table.insert(Result, "ActiveWinId: " .. tostring(Instance.ActiveWinId))
+		table.insert(Result, "X: " .. Instance.X)
+		table.insert(Result, "Y: " .. Instance.Y)
+		table.insert(Result, "W: " .. Instance.W)
+		table.insert(Result, "H: " .. Instance.H)
+		table.insert(Result, "DeltaX: " .. Instance.DeltaX)
+		table.insert(Result, "DeltaY: " .. Instance.DeltaY)
+		table.insert(Result, "DeltaW: " .. Instance.DeltaW)
+		table.insert(Result, "DeltaH: " .. Instance.DeltaH)
+		table.insert(Result, "Border: " .. Instance.Border)
+		table.insert(Result, "Rounding: " .. Instance.Rounding)
+		table.insert(Result, "Windows:")
+		for I, V in ipairs(Instance.Windows) do
+			table.insert(Result, "  " .. I .. ": " .. V.Id)
+		end
+	end
+
+	return Result
+end
+
 return Tab

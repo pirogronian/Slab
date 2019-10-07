@@ -163,16 +163,6 @@ local function UpdateTitleBar(Instance, OriginalX, OriginalY)
 		local Y = Instance.Y - H
 
 		local MouseX, MouseY = Mouse.Position()
-
-		if MovingInstance ~= nil and MovingInstance ~= Instance then
-			if Tab.IsActive() then
-				if Tab.HasWindow(MovingInstance.Id) then
-					MovingInstance = Instance
-					MovingInstance.IsMoving = true
-				end
-			end
-		end
-
 		if Mouse.IsClicked(1) and not Window.IsObstructed(MouseX, MouseY) then
 			if X <= MouseX and MouseX <= X + W and Y <= MouseY and MouseY <= Y + H then
 				Instance.IsMoving = true
@@ -191,7 +181,7 @@ local function UpdateTitleBar(Instance, OriginalX, OriginalY)
 			Dock.ResetTether()
 		end
 
-		if Instance.IsMoving then
+		if Instance.IsMoving and MovingInstance == Instance then
 			local DeltaX, DeltaY = Mouse.GetDelta()
 			if Instance.AllowMove then
 				Instance.TitleDeltaX = Instance.TitleDeltaX + DeltaX

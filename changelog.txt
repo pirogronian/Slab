@@ -1,10 +1,10 @@
 v0.7.0 RELEASE
 ==========
-[Dock]: Untethering one window untethers all window.
 [Dock]: Support allowing tab windows. All windows of the tab should be docked. The tab options should be altered by Dock.
 [Dock]: Documentation.
 [Tab]: Push focused window to front of title list if not visible.
 [Tab]: Documentation.
+[Tab]: Update moving instance when selecting new tab.
 [GitHub Issue #1]
 
 BUGS

@@ -32,6 +32,7 @@ local Mouse = require(SLAB_PATH .. '.Internal.Input.Mouse')
 local Region = require(SLAB_PATH .. '.Internal.UI.Region')
 local Stats = require(SLAB_PATH .. '.Internal.Core.Stats')
 local Style = require(SLAB_PATH .. '.Style')
+local Tab = require(SLAB_PATH .. '.Internal.UI.Tab')
 local Tooltip = require(SLAB_PATH .. '.Internal.UI.Tooltip')
 local Window = require(SLAB_PATH .. '.Internal.UI.Window')
 
@@ -567,6 +568,30 @@ function SlabDebug.MultiLine()
 	end
 end
 
+local SlabDebug_Tabs = false
+local SlabDebug_Tabs_Selected = nil
+
+function SlabDebug.Tabs()
+	Slab.BeginWindow('SlabDebug.Tabs', {Title = "Tabs"})
+
+	local Ids = Tab.GetIds()
+	if Slab.BeginComboBox('SlabDebug.Tabs.Ids', {Selected = tostring(SlabDebug_Tabs_Selected)}) then
+		for I, V in ipairs(Ids) do
+			if Slab.TextSelectable(V) then
+				SlabDebug_Tabs_Selected = V
+			end
+		end
+		Slab.EndComboBox()
+	end
+
+	local Info = Tab.GetDebugInfo(SlabDebug_Tabs_Selected)
+	for I, V in ipairs(Info) do
+		Slab.Text(V)
+	end
+
+	Slab.EndWindow()
+end
+
 function SlabDebug.Menu()
 	if Slab.BeginMenu("Debug") then
 		if Slab.MenuItem("About") then
@@ -614,6 +639,10 @@ function SlabDebug.Menu()
 			SlabDebug_MultiLine = not SlabDebug_MultiLine
 		end
 
+		if Slab.MenuItemChecked("Tabs", SlabDebug_Tabs) then
+			SlabDebug_Tabs = not SlabDebug_Tabs
+		end
+
 		Slab.EndMenu()
 	end
 end
@@ -659,6 +688,10 @@ function SlabDebug.Begin()
 
 	if SlabDebug_MultiLine then
 		SlabDebug.MultiLine()
+	end
+
+	if SlabDebug_Tabs then
+		SlabDebug.Tabs()
 	end
 end
 
