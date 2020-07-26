@@ -277,6 +277,7 @@ else
 	end
 
         if (errorAtAccess(FFI.C, "stat64")) then
+            print("No stat64 symbol in FFI.C namespace. Falling back to LOVE API.");
             Exists = function(Path)
                 return love.filesystem.getInfo(path) ~= nil;
             end
